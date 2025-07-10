@@ -110,3 +110,9 @@ Preferred communication style: Simple, everyday language.
 - **UI Improvements**: Resolved icon overlapping issues in search components
 - **Data Seeding**: Added sample properties and market analytics to database
 - **Performance**: Implemented database indexing and query optimization
+- **Enhanced Database Schema**: Expanded properties table with 20+ new fields including:
+  - Project details (project_id, project_name, developer_name)
+  - Technical specifications (tenure, planning_area, site_area_sqm, plot_ratio)
+  - Location data (lat/lng coordinates, postal_code, nearby amenities)
+  - Development info (launch_date, completion_date, no_of_units, storey_range)
+  - Enhanced search capabilities with developer, project type, and status filters

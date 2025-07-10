@@ -110,6 +110,34 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(properties.launchType, params.launchType));
     }
 
+    if (params.developerName) {
+      conditions.push(ilike(properties.developerName, `%${params.developerName}%`));
+    }
+
+    if (params.projectType) {
+      conditions.push(eq(properties.projectType, params.projectType));
+    }
+
+    if (params.tenure) {
+      conditions.push(eq(properties.tenure, params.tenure));
+    }
+
+    if (params.planningArea) {
+      conditions.push(ilike(properties.planningArea, `%${params.planningArea}%`));
+    }
+
+    if (params.district) {
+      conditions.push(ilike(properties.district, `%${params.district}%`));
+    }
+
+    if (params.projectStatus) {
+      conditions.push(eq(properties.projectStatus, params.projectStatus));
+    }
+
+    if (params.featured !== undefined) {
+      conditions.push(eq(properties.featured, params.featured));
+    }
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
     }

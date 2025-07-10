@@ -1,0 +1,25 @@
+| Field Name                     | Type             | Description                                        |
+| ------------------------------ | ---------------- | -------------------------------------------------- |
+| `project_id`                   | UUID / Integer   | Unique identifier                                  |
+| `project_name`                 | String           | e.g., “Arina East Residences”                      |
+| `developer_name`               | String           | e.g., “Hoi Hup Realty”                             |
+| `project_type`                 | Enum             | Condo, EC, Landed                                  |
+| `tenure`                       | Enum             | Freehold, 99-year, 999-year                        |
+| `district`                     | String           | e.g., “D15”                                        |
+| `planning_area`                | String           | e.g., “Marine Parade”                              |
+| `address`                      | String           | Project address                                    |
+| `postal_code`                  | String           | Singapore 6-digit code                             |
+| `launch_date`                  | Date             | Launch or preview date                             |
+| `completion_date`              | Date             | Estimated TOP or CSC                               |
+| `no_of_units`                  | Integer          | Total number of units                              |
+| `no_of_blocks`                 | Integer          | Blocks in the project                              |
+| `storey_range`                 | String           | e.g., “1–20”                                       |
+| `site_area_sqm`                | Float            | Total site area                                    |
+| `plot_ratio`                   | Float            | URA plot ratio                                     |
+| `primary_schools_within_1km`   | Array of Strings | e.g., “Tanjong Katong Primary”                     |
+| `mrt_nearby`                   | Array of Strings | MRT/LRT stations nearby                            |
+| `lat` / `lng`                  | Float            | For map view                                       |
+| `project_description`          | Text             | Overview content                                   |
+| `developer_sales_team_contact` | JSON             | Email, phone, WhatsApp links                       |
+| `featured`                     | Boolean          | For homepage or highlights                         |
+| `status`                       | Enum             | Coming Soon, Preview, Open for Booking, Fully Sold |
