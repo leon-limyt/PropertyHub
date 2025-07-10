@@ -53,7 +53,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
             Location
           </Label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
             <Select value={formData.location} onValueChange={(value) => handleChange('location', value)}>
               <SelectTrigger className="search-input">
                 <SelectValue placeholder="Select location" />
@@ -77,7 +77,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
             Property Type
           </Label>
           <div className="relative">
-            <Building className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
             <Select value={formData.propertyType} onValueChange={(value) => handleChange('propertyType', value)}>
               <SelectTrigger className="search-input">
                 <SelectValue placeholder="Select property type" />
@@ -99,7 +99,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
               Bedrooms
             </Label>
             <div className="relative">
-              <Bed className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+              <Bed className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
               <Select value={formData.bedrooms} onValueChange={(value) => handleChange('bedrooms', value)}>
                 <SelectTrigger className="search-input">
                   <SelectValue placeholder="Any" />
@@ -120,7 +120,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
               Bathrooms
             </Label>
             <div className="relative">
-              <Bath className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+              <Bath className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
               <Select value={formData.bathrooms} onValueChange={(value) => handleChange('bathrooms', value)}>
                 <SelectTrigger className="search-input">
                   <SelectValue placeholder="Any" />
@@ -140,7 +140,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
               Size (sqft)
             </Label>
             <div className="relative">
-              <Ruler className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+              <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
               <Select value={formData.sqftRange} onValueChange={(value) => handleChange('sqftRange', value)}>
                 <SelectTrigger className="search-input">
                   <SelectValue placeholder="Any" />
@@ -162,7 +162,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
             Price Range (SGD)
           </Label>
           <div className="relative">
-            <DollarSign className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
+            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
             <Select value={formData.priceRange} onValueChange={(value) => handleChange('priceRange', value)}>
               <SelectTrigger className="search-input">
                 <SelectValue placeholder="Any Budget" />
