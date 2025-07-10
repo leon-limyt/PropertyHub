@@ -14,6 +14,7 @@ import {
 import { Link } from "wouter";
 import LeadCapture from "@/components/lead-capture";
 import GoogleMap from "@/components/google-map";
+import MortgageCalculator from "@/components/mortgage-calculator";
 import type { Property } from "@shared/schema";
 import { useState } from "react";
 
@@ -280,12 +281,13 @@ export default function PropertyDetail() {
         {/* Tabbed Content */}
         <div className="bg-white rounded-xl shadow-sm">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 rounded-t-xl bg-gray-50">
+            <TabsList className="grid w-full grid-cols-7 rounded-t-xl bg-gray-50">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="amenities">Amenities</TabsTrigger>
               <TabsTrigger value="location">Location</TabsTrigger>
               <TabsTrigger value="investment">Market Analysis</TabsTrigger>
+              <TabsTrigger value="mortgage">Mortgage</TabsTrigger>
               <TabsTrigger value="contact">Contact</TabsTrigger>
             </TabsList>
 
@@ -721,6 +723,10 @@ export default function PropertyDetail() {
                     )}
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="mortgage">
+                <MortgageCalculator propertyPrice={parseFloat(property.price)} />
               </TabsContent>
 
               <TabsContent value="contact">

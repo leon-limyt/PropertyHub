@@ -126,3 +126,11 @@ Preferred communication style: Simple, everyday language.
   - Summary statistics showing market positioning
   - Detailed comparison table with current property highlighted
   - Market analysis insights and recommendations
+- **Mortgage Calculator**: Singapore MAS-compliant mortgage calculator
+  - Total Debt Servicing Ratio (TDSR) calculation with 55% limit
+  - Mortgage Servicing Ratio (MSR) calculation for HDB/EC with 30% limit
+  - Loan-to-Value (LTV) limits based on property count and borrower profile
+  - Interest rate stress testing at 4% floor rate
+  - Variable income haircut (30%) as per MAS guidelines
+  - Comprehensive eligibility assessment with warnings
+  - Real-time calculation updates and detailed loan breakdown
