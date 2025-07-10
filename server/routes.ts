@@ -8,6 +8,17 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // API Configuration route
+  app.get("/api/config", async (req, res) => {
+    try {
+      res.json({
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch config" });
+    }
+  });
+
   // Properties routes
   app.get("/api/properties", async (req, res) => {
     try {
