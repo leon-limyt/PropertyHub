@@ -285,7 +285,7 @@ export default function PropertyDetail() {
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="amenities">Amenities</TabsTrigger>
               <TabsTrigger value="location">Location</TabsTrigger>
-              <TabsTrigger value="investment">Investment</TabsTrigger>
+              <TabsTrigger value="investment">Market Analysis</TabsTrigger>
               <TabsTrigger value="contact">Contact</TabsTrigger>
             </TabsList>
 
