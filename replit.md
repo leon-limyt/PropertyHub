@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **Analytics Dashboard**: Market data visualization
 
 ### Backend Services
-- **Storage Layer**: In-memory storage implementation (MemStorage class)
+- **Storage Layer**: PostgreSQL database implementation (DatabaseStorage class)
 - **API Routes**: RESTful endpoints for properties, leads, favorites, and analytics
 - **Error Handling**: Centralized error middleware
 - **Development Tools**: Request logging and Vite integration
@@ -55,8 +55,8 @@ Preferred communication style: Simple, everyday language.
 
 1. **Client Requests**: React components make API calls via TanStack Query
 2. **API Layer**: Express routes handle requests and call storage methods
-3. **Storage Layer**: Currently uses in-memory storage (MemStorage)
-4. **Database**: PostgreSQL schema defined but not actively used yet
+3. **Storage Layer**: PostgreSQL database via Drizzle ORM
+4. **Database**: PostgreSQL with full schema and sample data
 5. **Response**: JSON data flows back through the API to React components
 
 ## External Dependencies
@@ -101,3 +101,12 @@ Preferred communication style: Simple, everyday language.
 3. **Shared Schema**: Common TypeScript types between frontend and backend
 4. **Component Library**: shadcn/ui provides consistent design system
 5. **Real Estate Focus**: Specialized for Singapore property market with relevant fields and features
+6. **Database Integration**: PostgreSQL with Drizzle ORM for secure, scalable data management
+
+## Recent Changes (January 2025)
+
+- **Database Integration**: Replaced in-memory storage with PostgreSQL database
+- **Search Functionality**: Fixed search form field mapping and location filtering
+- **UI Improvements**: Resolved icon overlapping issues in search components
+- **Data Seeding**: Added sample properties and market analytics to database
+- **Performance**: Implemented database indexing and query optimization
