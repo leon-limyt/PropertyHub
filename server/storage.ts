@@ -228,11 +228,24 @@ export class MemStorage implements IStorage {
   async searchProperties(params: SearchPropertiesParams): Promise<Property[]> {
     const properties = Array.from(this.properties.values());
     
-    return properties.filter(property => {
-      if (params.location && !property.location.toLowerCase().includes(params.location.toLowerCase()) && 
-          !property.district.toLowerCase().includes(params.location.toLowerCase())) {
-        return false;
+    console.log('Search params:', params);
+    console.log('Total properties:', properties.length);
+    
+    const results = properties.filter(property => {
+      // Location search - check district, location, and country
+      if (params.location) {
+        const locationMatch = 
+          property.location.toLowerCase().includes(params.location.toLowerCase()) ||
+          property.district.toLowerCase().includes(params.location.toLowerCase()) ||
+          property.country.toLowerCase().includes(params.location.toLowerCase()) ||
+          property.district === params.location ||
+          property.country === params.location;
+        
+        if (!locationMatch) {
+          return false;
+        }
       }
+      
       if (params.propertyType && property.propertyType !== params.propertyType) {
         return false;
       }
@@ -262,6 +275,11 @@ export class MemStorage implements IStorage {
       }
       return true;
     });
+    
+    console.log('Search results:', results.length);
+    console.log('First few results:', results.slice(0, 2).map(p => ({ title: p.title, district: p.district, country: p.country })));
+    
+    return results;
   }
 
   async getFeaturedProperties(): Promise<Property[]> {

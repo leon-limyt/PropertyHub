@@ -36,12 +36,40 @@ export default function Properties() {
     const newParams = { ...searchParams };
     
     urlParams.forEach((value, key) => {
-      if (key in newParams) {
-        if (key === 'isOverseas') {
-          newParams[key] = value === 'true';
-        } else {
-          newParams[key] = value;
+      if (key === 'isOverseas') {
+        newParams[key] = value === 'true';
+      } else if (key === 'priceRange') {
+        // Transform price range back to min/max prices
+        if (value === "500000-800000") {
+          newParams.minPrice = "500000";
+          newParams.maxPrice = "800000";
+        } else if (value === "800000-1200000") {
+          newParams.minPrice = "800000";
+          newParams.maxPrice = "1200000";
+        } else if (value === "1200000-2000000") {
+          newParams.minPrice = "1200000";
+          newParams.maxPrice = "2000000";
+        } else if (value === "2000000+") {
+          newParams.minPrice = "2000000";
+          newParams.maxPrice = "";
         }
+      } else if (key === 'sqftRange') {
+        // Transform sqft range back to min/max sqft
+        if (value === "400-600") {
+          newParams.minSqft = "400";
+          newParams.maxSqft = "600";
+        } else if (value === "600-800") {
+          newParams.minSqft = "600";
+          newParams.maxSqft = "800";
+        } else if (value === "800-1000") {
+          newParams.minSqft = "800";
+          newParams.maxSqft = "1000";
+        } else if (value === "1000+") {
+          newParams.minSqft = "1000";
+          newParams.maxSqft = "";
+        }
+      } else if (key in newParams) {
+        newParams[key] = value;
       }
     });
     

@@ -26,14 +26,68 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
     e.preventDefault();
     
     const searchParams = new URLSearchParams();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value && value !== "any") {
-        searchParams.append(key, value);
+    
+    // Transform form data to match backend expectations
+    const transformedData: any = {};
+    
+    if (formData.location && formData.location !== "any") {
+      transformedData.location = formData.location;
+      searchParams.append("location", formData.location);
+    }
+    
+    if (formData.propertyType && formData.propertyType !== "any") {
+      transformedData.propertyType = formData.propertyType;
+      searchParams.append("propertyType", formData.propertyType);
+    }
+    
+    if (formData.bedrooms && formData.bedrooms !== "any") {
+      transformedData.bedrooms = formData.bedrooms;
+      searchParams.append("bedrooms", formData.bedrooms);
+    }
+    
+    if (formData.bathrooms && formData.bathrooms !== "any") {
+      transformedData.bathrooms = formData.bathrooms;
+      searchParams.append("bathrooms", formData.bathrooms);
+    }
+    
+    // Transform price range into min/max price
+    if (formData.priceRange && formData.priceRange !== "any") {
+      const priceRange = formData.priceRange;
+      if (priceRange === "500000-800000") {
+        transformedData.minPrice = 500000;
+        transformedData.maxPrice = 800000;
+      } else if (priceRange === "800000-1200000") {
+        transformedData.minPrice = 800000;
+        transformedData.maxPrice = 1200000;
+      } else if (priceRange === "1200000-2000000") {
+        transformedData.minPrice = 1200000;
+        transformedData.maxPrice = 2000000;
+      } else if (priceRange === "2000000+") {
+        transformedData.minPrice = 2000000;
       }
-    });
+      searchParams.append("priceRange", priceRange);
+    }
+    
+    // Transform sqft range into min/max sqft
+    if (formData.sqftRange && formData.sqftRange !== "any") {
+      const sqftRange = formData.sqftRange;
+      if (sqftRange === "400-600") {
+        transformedData.minSqft = 400;
+        transformedData.maxSqft = 600;
+      } else if (sqftRange === "600-800") {
+        transformedData.minSqft = 600;
+        transformedData.maxSqft = 800;
+      } else if (sqftRange === "800-1000") {
+        transformedData.minSqft = 800;
+        transformedData.maxSqft = 1000;
+      } else if (sqftRange === "1000+") {
+        transformedData.minSqft = 1000;
+      }
+      searchParams.append("sqftRange", sqftRange);
+    }
     
     if (onSearch) {
-      onSearch(formData);
+      onSearch(transformedData);
     } else {
       setLocation(`/properties?${searchParams.toString()}`);
     }
@@ -60,13 +114,13 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any Location</SelectItem>
-                <SelectItem value="district-1">District 1 - Boat Quay/Raffles Place</SelectItem>
-                <SelectItem value="district-9">District 9 - Orchard Road</SelectItem>
-                <SelectItem value="district-10">District 10 - Tanglin/Holland</SelectItem>
-                <SelectItem value="district-11">District 11 - Novena/Thomson</SelectItem>
-                <SelectItem value="sentosa">Sentosa</SelectItem>
-                <SelectItem value="malaysia">Malaysia</SelectItem>
-                <SelectItem value="thailand">Thailand</SelectItem>
+                <SelectItem value="District 1">District 1 - Boat Quay/Raffles Place</SelectItem>
+                <SelectItem value="District 9">District 9 - Orchard Road</SelectItem>
+                <SelectItem value="District 10">District 10 - Tanglin/Holland</SelectItem>
+                <SelectItem value="District 11">District 11 - Novena/Thomson</SelectItem>
+                <SelectItem value="Sentosa">Sentosa</SelectItem>
+                <SelectItem value="Malaysia">Malaysia</SelectItem>
+                <SelectItem value="Thailand">Thailand</SelectItem>
               </SelectContent>
             </Select>
           </div>
