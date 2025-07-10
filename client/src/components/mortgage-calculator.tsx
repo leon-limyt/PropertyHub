@@ -39,6 +39,22 @@ export default function MortgageCalculator({ propertyPrice, className = "" }: Mo
   const [variableIncome, setVariableIncome] = useState<string>("");
   const [result, setResult] = useState<CalculationResult | null>(null);
 
+  // Auto-update loan tenure when borrower age changes
+  useEffect(() => {
+    const age = parseInt(borrowerAge);
+    if (age > 0) {
+      // Maximum loan tenure is typically 65 - current age, capped at 35 years
+      const maxTenure = Math.min(65 - age, 35);
+      const suggestedTenure = Math.max(Math.min(maxTenure, 30), 15); // Keep between 15-30 years typically
+      
+      // Only update if current tenure would exceed the maximum allowed
+      const currentTenure = parseInt(loanTenure);
+      if (currentTenure > maxTenure) {
+        setLoanTenure(suggestedTenure.toString());
+      }
+    }
+  }, [borrowerAge]);
+
   // MAS Guidelines Constants
   const TDSR_LIMIT = 55; // 55%
   const MSR_LIMIT = 30; // 30% for HDB/EC
@@ -67,6 +83,23 @@ export default function MortgageCalculator({ propertyPrice, className = "" }: Mo
     const age = parseInt(borrowerAge);
     const propCount = parseInt(propertyCount);
 
+    // Validate inputs
+    if (income <= 0 || tenure <= 0 || age <= 0) {
+      return {
+        maxLoanAmount: 0,
+        downPayment: propertyPrice,
+        monthlyPayment: 0,
+        totalInterest: 0,
+        totalPayment: 0,
+        ltv: 0,
+        tdsr: 0,
+        msr: 0,
+        isEligible: false,
+        warnings: ["Please provide valid income, age, and loan tenure"],
+        propertyCount: propCount
+      };
+    }
+
     // Calculate adjusted income (apply haircut to variable income)
     const adjustedVariableIncome = variableIncomeAmount * (1 - VARIABLE_INCOME_HAIRCUT);
     const totalAdjustedIncome = income + adjustedVariableIncome;
@@ -79,59 +112,88 @@ export default function MortgageCalculator({ propertyPrice, className = "" }: Mo
     
     // Calculate maximum loan based on TDSR
     const maxTotalDebtService = totalAdjustedIncome * (TDSR_LIMIT / 100);
-    const availableForMortgage = maxTotalDebtService - debt;
+    const availableForMortgage = Math.max(0, maxTotalDebtService - debt);
     
     // Use stress test rate for affordability calculation
-    const maxLoanByTdsr = availableForMortgage * ((Math.pow(1 + stressRate, tenure * 12) - 1) / (stressRate * Math.pow(1 + stressRate, tenure * 12)));
+    let maxLoanByTdsr = 0;
+    if (availableForMortgage > 0 && stressRate > 0) {
+      const monthlyPaymentCapacity = availableForMortgage;
+      const denominator = (stressRate * Math.pow(1 + stressRate, tenure * 12)) / (Math.pow(1 + stressRate, tenure * 12) - 1);
+      maxLoanByTdsr = monthlyPaymentCapacity / denominator;
+    }
     
     // Calculate maximum loan based on MSR (for HDB/EC only)
     let maxLoanByMsr = Infinity;
     if (propertyType === "hdb" || propertyType === "ec") {
       const maxMortgagePayment = totalAdjustedIncome * (MSR_LIMIT / 100);
-      maxLoanByMsr = maxMortgagePayment * ((Math.pow(1 + stressRate, tenure * 12) - 1) / (stressRate * Math.pow(1 + stressRate, tenure * 12)));
+      if (maxMortgagePayment > 0 && stressRate > 0) {
+        const denominator = (stressRate * Math.pow(1 + stressRate, tenure * 12)) / (Math.pow(1 + stressRate, tenure * 12) - 1);
+        maxLoanByMsr = maxMortgagePayment / denominator;
+      }
     }
     
     // Final loan amount is the minimum of all constraints
     const maxLoanAmount = Math.min(maxLoanByLtv, maxLoanByTdsr, maxLoanByMsr);
-    const downPayment = propertyPrice - maxLoanAmount;
+    const actualLoanAmount = Math.max(0, Math.min(maxLoanAmount, propertyPrice));
+    const downPayment = Math.max(0, propertyPrice - actualLoanAmount);
     
     // Calculate monthly payment using actual interest rate (not stress test rate)
-    const monthlyPayment = maxLoanAmount * (rate * Math.pow(1 + rate, tenure * 12)) / (Math.pow(1 + rate, tenure * 12) - 1);
+    let monthlyPayment = 0;
+    if (actualLoanAmount > 0 && rate > 0) {
+      monthlyPayment = actualLoanAmount * (rate * Math.pow(1 + rate, tenure * 12)) / (Math.pow(1 + rate, tenure * 12) - 1);
+    }
     
     const totalPayment = monthlyPayment * tenure * 12;
-    const totalInterest = totalPayment - maxLoanAmount;
+    const totalInterest = totalPayment - actualLoanAmount;
     
     // Calculate actual ratios
-    const ltv = (maxLoanAmount / propertyPrice) * 100;
-    const tdsr = ((monthlyPayment + debt) / totalAdjustedIncome) * 100;
-    const msr = (monthlyPayment / totalAdjustedIncome) * 100;
+    const ltv = actualLoanAmount > 0 ? (actualLoanAmount / propertyPrice) * 100 : 0;
+    const tdsr = totalAdjustedIncome > 0 ? ((monthlyPayment + debt) / totalAdjustedIncome) * 100 : 0;
+    const msr = totalAdjustedIncome > 0 ? (monthlyPayment / totalAdjustedIncome) * 100 : 0;
     
     // Check eligibility and generate warnings
     const warnings: string[] = [];
     let isEligible = true;
     
+    // Check minimum income
+    if (totalAdjustedIncome < 3000) {
+      warnings.push("Minimum income requirement may not be met (SGD 3,000)");
+      isEligible = false;
+    }
+    
+    // Check if borrower can afford the property
+    if (availableForMortgage <= 0) {
+      warnings.push("Existing debt exceeds TDSR capacity");
+      isEligible = false;
+    }
+    
+    // Check TDSR compliance
     if (tdsr > TDSR_LIMIT) {
       warnings.push(`TDSR (${tdsr.toFixed(1)}%) exceeds limit of ${TDSR_LIMIT}%`);
       isEligible = false;
     }
     
+    // Check MSR compliance for HDB/EC
     if ((propertyType === "hdb" || propertyType === "ec") && msr > MSR_LIMIT) {
       warnings.push(`MSR (${msr.toFixed(1)}%) exceeds limit of ${MSR_LIMIT}% for HDB/EC`);
       isEligible = false;
     }
     
+    // Check LTV compliance
     if (ltv > ltvLimit) {
       warnings.push(`LTV (${ltv.toFixed(1)}%) exceeds limit of ${ltvLimit}% for ${propCount}${propCount === 1 ? 'st' : propCount === 2 ? 'nd' : 'rd'} property`);
       isEligible = false;
     }
     
-    if (downPayment < 0) {
-      warnings.push("Property price exceeds borrowing capacity");
+    // Check loan coverage
+    if (actualLoanAmount < propertyPrice * 0.1) {
+      warnings.push("Loan amount too low - insufficient borrowing capacity");
       isEligible = false;
     }
     
-    if (totalAdjustedIncome < 3000) {
-      warnings.push("Minimum income requirement may not be met");
+    // Age and tenure warnings
+    if (age + tenure > 65) {
+      warnings.push("Loan may extend beyond typical retirement age (65)");
     }
     
     if (tenure > 30 || age > 65) {
@@ -139,11 +201,11 @@ export default function MortgageCalculator({ propertyPrice, className = "" }: Mo
     }
 
     return {
-      maxLoanAmount: Math.max(0, maxLoanAmount),
-      downPayment: Math.max(0, downPayment),
-      monthlyPayment: isNaN(monthlyPayment) ? 0 : monthlyPayment,
-      totalInterest: isNaN(totalInterest) ? 0 : totalInterest,
-      totalPayment: isNaN(totalPayment) ? 0 : totalPayment,
+      maxLoanAmount: actualLoanAmount,
+      downPayment,
+      monthlyPayment,
+      totalInterest,
+      totalPayment,
       ltv,
       tdsr,
       msr,
@@ -277,6 +339,11 @@ export default function MortgageCalculator({ propertyPrice, className = "" }: Mo
                   <SelectItem value="35">35 years</SelectItem>
                 </SelectContent>
               </Select>
+              {borrowerAge && (
+                <div className="text-xs text-gray-500">
+                  Max tenure for age {borrowerAge}: {Math.min(65 - parseInt(borrowerAge), 35)} years
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
