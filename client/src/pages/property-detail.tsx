@@ -27,6 +27,11 @@ export default function PropertyDetail() {
     enabled: !!propertyId,
   });
 
+  const { data: nearbyProperties, isLoading: nearbyLoading } = useQuery<Property[]>({
+    queryKey: ["/api/properties", propertyId, "nearby"],
+    enabled: !!propertyId,
+  });
+
   // Sample gallery images - in a real app, these would come from the property data
   const galleryImages = [
     property?.imageUrl || "",
@@ -575,57 +580,145 @@ export default function PropertyDetail() {
               <TabsContent value="investment">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Investment Highlights</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <div className="flex items-center mb-2">
-                          <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
-                          <span className="font-medium">Expected ROI</span>
-                        </div>
-                        <div className="text-2xl font-bold text-green-600">
-                          {property.expectedRoi ? `${property.expectedRoi}%` : 'N/A'}
-                        </div>
+                    <h3 className="text-lg font-semibold mb-4">Comparative Analysis - Neighboring Properties (1km radius)</h3>
+                    {nearbyLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
+                        <p className="text-gray-500">Loading nearby properties...</p>
                       </div>
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <div className="flex items-center mb-2">
-                          <DollarSign className="h-5 w-5 text-blue-600 mr-2" />
-                          <span className="font-medium">Price per Sqft</span>
+                    ) : nearbyProperties && nearbyProperties.length > 0 ? (
+                      <div className="space-y-4">
+                        {/* Summary Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <div className="flex items-center mb-2">
+                              <DollarSign className="h-5 w-5 text-blue-600 mr-2" />
+                              <span className="font-medium">Avg. Price PSF</span>
+                            </div>
+                            <div className="text-2xl font-bold text-blue-600">
+                              ${Math.round(nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              Your property: ${parseFloat(property.psf).toFixed(0)}
+                            </div>
+                          </div>
+                          <div className="bg-green-50 p-4 rounded-lg">
+                            <div className="flex items-center mb-2">
+                              <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
+                              <span className="font-medium">Price Comparison</span>
+                            </div>
+                            <div className="text-2xl font-bold text-green-600">
+                              {parseFloat(property.psf) > (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length) ? '↑' : '↓'}
+                              {Math.abs(parseFloat(property.psf) - (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length)).toFixed(0)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              vs neighborhood avg
+                            </div>
+                          </div>
+                          <div className="bg-purple-50 p-4 rounded-lg">
+                            <div className="flex items-center mb-2">
+                              <Building className="h-5 w-5 text-purple-600 mr-2" />
+                              <span className="font-medium">Properties Found</span>
+                            </div>
+                            <div className="text-2xl font-bold text-purple-600">
+                              {nearbyProperties.length}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              within 1km radius
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-2xl font-bold text-blue-600">
-                          ${parseFloat(property.psf).toFixed(0)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  <Separator />
-
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Investment Benefits</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                        <span>Prime location in {property.district}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                        <span>Strong rental demand in the area</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                        <span>Excellent connectivity and transport links</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                        <span>Quality development by established developer</span>
-                      </div>
-                      {property.tenure && (
-                        <div className="flex items-center">
-                          <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                          <span>{property.tenure} tenure provides long-term value</span>
+                        {/* Detailed Comparison Table */}
+                        <div className="bg-white rounded-lg border overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PSF</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bed/Bath</th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {/* Current Property Row */}
+                                <tr className="bg-teal-50 border-l-4 border-teal-500">
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center">
+                                      <div className="font-medium text-gray-900">{property.title}</div>
+                                      <Badge className="ml-2 bg-teal-100 text-teal-800">Current</Badge>
+                                    </div>
+                                    <div className="text-sm text-gray-500 truncate">{property.location}</div>
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">
+                                    {formatPrice(property.price)}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">
+                                    ${parseFloat(property.psf).toFixed(0)}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">
+                                    {property.sqft.toLocaleString()} sqft
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-900">
+                                    {property.bedrooms}BR/{property.bathrooms}BA
+                                  </td>
+                                </tr>
+                                {/* Nearby Properties */}
+                                {nearbyProperties.slice(0, 5).map((nearbyProperty, index) => (
+                                  <tr key={nearbyProperty.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3">
+                                      <div className="font-medium text-gray-900">{nearbyProperty.title}</div>
+                                      <div className="text-sm text-gray-500 truncate">{nearbyProperty.location}</div>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                      {formatPrice(nearbyProperty.price)}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                      <div className="flex items-center">
+                                        <span className="text-gray-900">${parseFloat(nearbyProperty.psf).toFixed(0)}</span>
+                                        {parseFloat(nearbyProperty.psf) > parseFloat(property.psf) ? (
+                                          <span className="ml-2 text-red-600 text-xs">↑{((parseFloat(nearbyProperty.psf) - parseFloat(property.psf)) / parseFloat(property.psf) * 100).toFixed(1)}%</span>
+                                        ) : (
+                                          <span className="ml-2 text-green-600 text-xs">↓{((parseFloat(property.psf) - parseFloat(nearbyProperty.psf)) / parseFloat(property.psf) * 100).toFixed(1)}%</span>
+                                        )}
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                      {nearbyProperty.sqft.toLocaleString()} sqft
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                      {nearbyProperty.bedrooms}BR/{nearbyProperty.bathrooms}BA
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                      )}
-                    </div>
+
+                        {/* Market Analysis */}
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h4 className="font-semibold mb-2">Market Analysis Summary</h4>
+                          <div className="text-sm text-gray-600">
+                            <p>
+                              Your property is priced at ${parseFloat(property.psf).toFixed(0)} per sqft, which is{' '}
+                              {parseFloat(property.psf) > (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length) ? 
+                                'above' : 'below'} the neighborhood average of ${Math.round(nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length)} per sqft.
+                            </p>
+                            <p className="mt-2">
+                              Based on {nearbyProperties.length} comparable properties within 1km, your property offers {parseFloat(property.psf) > (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length) ? 'premium' : 'competitive'} pricing in this prime location.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-500">No comparable properties found within 1km radius</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </TabsContent>

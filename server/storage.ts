@@ -14,7 +14,7 @@ import {
   type SearchPropertiesParams 
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, or, ilike } from "drizzle-orm";
+import { eq, and, gte, lte, or, ilike, ne } from "drizzle-orm";
 
 export interface IStorage {
   // Properties
@@ -41,6 +41,9 @@ export interface IStorage {
   getMarketAnalytics(): Promise<MarketAnalytics[]>;
   getMarketAnalyticsByDistrict(district: string): Promise<MarketAnalytics | undefined>;
   createMarketAnalytics(analytics: InsertMarketAnalytics): Promise<MarketAnalytics>;
+  
+  // Neighboring Properties
+  getNearbyProperties(lat: number, lng: number, radiusKm: number, excludeId?: number): Promise<Property[]>;
 }
 
 
@@ -225,6 +228,56 @@ export class DatabaseStorage implements IStorage {
       .values(insertAnalytics)
       .returning();
     return analytics;
+  }
+
+  // Nearby Properties using Haversine formula
+  async getNearbyProperties(lat: number, lng: number, radiusKm: number, excludeId?: number): Promise<Property[]> {
+    // Get all local properties (not overseas) with coordinates
+    let allProperties;
+    
+    if (excludeId) {
+      allProperties = await db.select().from(properties)
+        .where(and(
+          eq(properties.isOverseas, false),
+          ne(properties.id, excludeId)
+        ));
+    } else {
+      allProperties = await db.select().from(properties)
+        .where(eq(properties.isOverseas, false));
+    }
+    
+    // Filter properties that have coordinates
+    const propertiesWithCoords = allProperties.filter(p => p.lat && p.lng);
+    
+    // Calculate distance for each property
+    const propertiesWithDistance = propertiesWithCoords.map(property => {
+      const distance = this.calculateDistance(
+        lat, lng, 
+        parseFloat(property.lat!), parseFloat(property.lng!)
+      );
+      return { ...property, distance };
+    });
+    
+    // Filter by radius and sort by distance
+    return propertiesWithDistance
+      .filter(p => p.distance <= radiusKm)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10);
+  }
+
+  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLng = this.toRadians(lng2 - lng1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
   }
 }
 

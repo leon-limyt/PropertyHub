@@ -70,6 +70,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/properties/:id/nearby", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const property = await storage.getProperty(id);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      
+      if (!property.lat || !property.lng) {
+        return res.status(400).json({ message: "Property location coordinates not available" });
+      }
+      
+      const radius = parseFloat(req.query.radius as string) || 1; // Default 1km radius
+      const nearbyProperties = await storage.getNearbyProperties(
+        parseFloat(property.lat),
+        parseFloat(property.lng),
+        radius,
+        id
+      );
+      
+      res.json(nearbyProperties);
+    } catch (error) {
+      console.error("Error fetching nearby properties:", error);
+      res.status(500).json({ message: "Failed to fetch nearby properties" });
+    }
+  });
+
   // Leads routes
   app.post("/api/leads", async (req, res) => {
     try {
