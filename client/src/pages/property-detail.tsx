@@ -9,20 +9,40 @@ import { Separator } from "@/components/ui/separator";
 import { 
   ArrowLeft, MapPin, Bed, Bath, Ruler, DollarSign, Heart, Phone, Mail, Share2, 
   Building, Calendar, Users, TrendingUp, School, Train, Car, Home, Clock,
-  MapPinIcon, Star, Award, CheckCircle, Info
+  MapPinIcon, Star, Award, CheckCircle, Info, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { Link } from "wouter";
 import LeadCapture from "@/components/lead-capture";
 import type { Property } from "@shared/schema";
+import { useState } from "react";
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const propertyId = id ? parseInt(id) : 0;
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { data: property, isLoading, error } = useQuery<Property>({
     queryKey: ["/api/properties", propertyId],
     enabled: !!propertyId,
   });
+
+  // Sample gallery images - in a real app, these would come from the property data
+  const galleryImages = [
+    property?.imageUrl || "",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1560449752-d9bb65c1d4ad?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1560448075-cbc16bb4af8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+    "https://images.unsplash.com/photo-1560185007-5f0bb1866cab?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
+  ].filter(Boolean);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % galleryImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  };
 
   if (isLoading) {
     return (
@@ -116,21 +136,72 @@ export default function PropertyDetail() {
           {/* Property Image Gallery */}
           <div className="lg:col-span-2">
             <div className="relative">
-              <img
-                src={property.imageUrl}
-                alt={property.title}
-                className="w-full h-96 object-cover rounded-xl"
-              />
-              <Badge className={`absolute top-4 left-4 ${getBadgeStyle(property.launchType)}`}>
-                {getBadgeText(property.launchType)}
-              </Badge>
-              <Badge className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-900">
-                {property.district}
-              </Badge>
-              {property.isOverseas && (
-                <Badge className="absolute bottom-4 left-4 bg-blue-600 text-white">
-                  {property.country}
+              {/* Main Image */}
+              <div className="relative h-96 rounded-xl overflow-hidden">
+                <img
+                  src={galleryImages[currentImageIndex]}
+                  alt={`${property.title} - Image ${currentImageIndex + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <Badge className={`absolute top-4 left-4 ${getBadgeStyle(property.launchType)}`}>
+                  {getBadgeText(property.launchType)}
                 </Badge>
+                <Badge className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-900">
+                  {property.district}
+                </Badge>
+                {property.isOverseas && (
+                  <Badge className="absolute bottom-4 left-4 bg-blue-600 text-white">
+                    {property.country}
+                  </Badge>
+                )}
+                
+                {/* Navigation Arrows */}
+                {galleryImages.length > 1 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm"
+                      onClick={prevImage}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm"
+                      onClick={nextImage}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                
+                {/* Image Counter */}
+                <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                  {currentImageIndex + 1} / {galleryImages.length}
+                </div>
+              </div>
+              
+              {/* Thumbnail Gallery */}
+              {galleryImages.length > 1 && (
+                <div className="flex space-x-2 mt-4 overflow-x-auto">
+                  {galleryImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`relative flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                        index === currentImageIndex ? 'border-teal-500' : 'border-gray-200'
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -430,6 +501,54 @@ export default function PropertyDetail() {
                       {property.planningArea && (
                         <div className="text-sm text-gray-600">
                           Planning Area: {property.planningArea}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Map Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Map Location</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 h-80 flex items-center justify-center">
+                      {property.lat && property.lng ? (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-green-100 rounded-lg flex items-center justify-center relative overflow-hidden">
+                          {/* Simple Map Placeholder with Coordinates */}
+                          <div className="absolute inset-0 bg-cover bg-center opacity-30" 
+                               style={{
+                                 backgroundImage: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&h=600')"
+                               }}>
+                          </div>
+                          <div className="relative z-10 text-center">
+                            <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-3 animate-bounce">
+                              <MapPinIcon className="h-6 w-6 text-white" />
+                            </div>
+                            <div className="bg-white/90 backdrop-blur-sm p-3 rounded-lg">
+                              <p className="font-semibold text-gray-900">{property.title}</p>
+                              <p className="text-sm text-gray-600">{property.location}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Coordinates: {parseFloat(property.lat).toFixed(4)}, {parseFloat(property.lng).toFixed(4)}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Interactive Map Button */}
+                          <div className="absolute bottom-4 right-4">
+                            <Button 
+                              size="sm" 
+                              className="bg-white text-gray-900 hover:bg-gray-100"
+                              onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`, '_blank')}
+                            >
+                              <MapPinIcon className="h-4 w-4 mr-2" />
+                              Open in Google Maps
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center text-gray-500">
+                          <MapPinIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                          <p>Map coordinates not available</p>
                         </div>
                       )}
                     </div>
