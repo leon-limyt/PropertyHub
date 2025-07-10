@@ -116,3 +116,13 @@ Preferred communication style: Simple, everyday language.
   - Location data (lat/lng coordinates, postal_code, nearby amenities)
   - Development info (launch_date, completion_date, no_of_units, storey_range)
   - Enhanced search capabilities with developer, project type, and status filters
+- **Google Maps Integration**: Implemented real Google Maps with API key integration
+  - Custom property markers with info windows
+  - Secure API key handling through server endpoint
+  - Interactive map with zoom and pan capabilities
+- **Comparative Analysis Feature**: Added Investment tab with neighboring properties analysis
+  - Haversine distance calculation for 1km radius property search
+  - Comparative pricing analysis with percentage differences
+  - Summary statistics showing market positioning
+  - Detailed comparison table with current property highlighted
+  - Market analysis insights and recommendations
