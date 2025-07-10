@@ -66,9 +66,8 @@ export class DatabaseStorage implements IStorage {
       conditions.push(
         or(
           ilike(properties.location, `%${params.location}%`),
-          ilike(properties.district, `%${params.location}%`),
+          eq(properties.district, params.location), // Exact match for district
           ilike(properties.country, `%${params.location}%`),
-          eq(properties.district, params.location),
           eq(properties.country, params.location)
         )
       );
