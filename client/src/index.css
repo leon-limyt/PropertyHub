@@ -99,7 +99,12 @@
   }
   
   .search-input {
-    @apply w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500;
+    @apply w-full pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white;
+    padding-left: 2.5rem !important;
+  }
+
+  .search-input > span {
+    padding-left: 0 !important;
   }
   
   .btn-primary {
