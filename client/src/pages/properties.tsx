@@ -139,7 +139,7 @@ export default function Properties() {
                     Location
                   </Label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Select value={searchParams.location} onValueChange={(value) => handleParamChange('location', value)}>
                       <SelectTrigger className="pl-10">
                         <SelectValue placeholder="Any location" />
@@ -162,7 +162,7 @@ export default function Properties() {
                     Property Type
                   </Label>
                   <div className="relative">
-                    <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Select value={searchParams.propertyType} onValueChange={(value) => handleParamChange('propertyType', value)}>
                       <SelectTrigger className="pl-10">
                         <SelectValue placeholder="Any type" />
@@ -200,7 +200,7 @@ export default function Properties() {
                     Bedrooms
                   </Label>
                   <div className="relative">
-                    <Bed className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Bed className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Select value={searchParams.bedrooms} onValueChange={(value) => handleParamChange('bedrooms', value)}>
                       <SelectTrigger className="pl-10">
                         <SelectValue placeholder="Any" />
@@ -221,7 +221,7 @@ export default function Properties() {
                     Bathrooms
                   </Label>
                   <div className="relative">
-                    <Bath className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Bath className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Select value={searchParams.bathrooms} onValueChange={(value) => handleParamChange('bathrooms', value)}>
                       <SelectTrigger className="pl-10">
                         <SelectValue placeholder="Any" />
@@ -256,7 +256,7 @@ export default function Properties() {
                     Min Price (SGD)
                   </Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Input
                       type="number"
                       placeholder="Min price"
@@ -272,7 +272,7 @@ export default function Properties() {
                     Max Price (SGD)
                   </Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Input
                       type="number"
                       placeholder="Max price"
@@ -288,7 +288,7 @@ export default function Properties() {
                     Min Size (sqft)
                   </Label>
                   <div className="relative">
-                    <Ruler className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Input
                       type="number"
                       placeholder="Min sqft"
