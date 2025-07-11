@@ -81,7 +81,7 @@ export default function Properties() {
   }, [location]);
 
   const { data: properties, isLoading, refetch } = useQuery<Property[]>({
-    queryKey: ["/api/properties/search"],
+    queryKey: ["/api/properties/search", searchParams],
     queryFn: async () => {
       const searchData = {
         location: searchParams.location === "any" ? undefined : searchParams.location,
@@ -102,10 +102,19 @@ export default function Properties() {
         schoolDistance: searchParams.schoolDistance === "any" ? undefined : searchParams.schoolDistance,
       };
       
-      return await apiRequest("/api/properties/search", {
+      const response = await fetch("/api/properties/search", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(searchData),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
   });
 
