@@ -28,7 +28,7 @@ export default function PropertyDetail() {
     enabled: !!propertyId,
   });
 
-  const { data: nearbyProperties, isLoading: nearbyLoading } = useQuery<Property[]>({
+  const { data: sameDistrictProperties, isLoading: sameDistrictLoading } = useQuery<Property[]>({
     queryKey: ["/api/properties", propertyId, "nearby"],
     enabled: !!propertyId,
   });
@@ -582,13 +582,16 @@ export default function PropertyDetail() {
               <TabsContent value="investment">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Comparative Analysis - Neighboring Properties (1km radius)</h3>
-                    {nearbyLoading ? (
+                    <h3 className="text-lg font-semibold mb-4">Comparative Market Analysis - Same District Properties</h3>
+                    <p className="text-gray-600 mb-6">
+                      Compare this property with similar properties in the same district ({property.district}) to understand its market position.
+                    </p>
+                    {sameDistrictLoading ? (
                       <div className="text-center py-8">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
-                        <p className="text-gray-500">Loading nearby properties...</p>
+                        <p className="text-gray-500">Loading district properties...</p>
                       </div>
-                    ) : nearbyProperties && nearbyProperties.length > 0 ? (
+                    ) : sameDistrictProperties && sameDistrictProperties.length > 0 ? (
                       <div className="space-y-4">
                         {/* Summary Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -598,7 +601,7 @@ export default function PropertyDetail() {
                               <span className="font-medium">Avg. Price PSF</span>
                             </div>
                             <div className="text-2xl font-bold text-blue-600">
-                              ${Math.round(nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length)}
+                              ${Math.round(sameDistrictProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / sameDistrictProperties.length)}
                             </div>
                             <div className="text-sm text-gray-600">
                               Your property: ${parseFloat(property.psf).toFixed(0)}
@@ -610,11 +613,11 @@ export default function PropertyDetail() {
                               <span className="font-medium">Price Comparison</span>
                             </div>
                             <div className="text-2xl font-bold text-green-600">
-                              {parseFloat(property.psf) > (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length) ? '↑' : '↓'}
-                              {Math.abs(parseFloat(property.psf) - (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length)).toFixed(0)}
+                              {parseFloat(property.psf) > (sameDistrictProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / sameDistrictProperties.length) ? '↑' : '↓'}
+                              {Math.abs(parseFloat(property.psf) - (sameDistrictProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / sameDistrictProperties.length)).toFixed(0)}
                             </div>
                             <div className="text-sm text-gray-600">
-                              vs neighborhood avg
+                              vs district avg
                             </div>
                           </div>
                           <div className="bg-purple-50 p-4 rounded-lg">
@@ -623,10 +626,10 @@ export default function PropertyDetail() {
                               <span className="font-medium">Properties Found</span>
                             </div>
                             <div className="text-2xl font-bold text-purple-600">
-                              {nearbyProperties.length}
+                              {sameDistrictProperties.length}
                             </div>
                             <div className="text-sm text-gray-600">
-                              within 1km radius
+                              in same district
                             </div>
                           </div>
                         </div>
@@ -668,7 +671,7 @@ export default function PropertyDetail() {
                                   </td>
                                 </tr>
                                 {/* Nearby Properties */}
-                                {nearbyProperties.slice(0, 5).map((nearbyProperty, index) => (
+                                {sameDistrictProperties.slice(0, 5).map((nearbyProperty, index) => (
                                   <tr key={nearbyProperty.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3">
                                       <div className="font-medium text-gray-900">{nearbyProperty.title}</div>
@@ -706,11 +709,11 @@ export default function PropertyDetail() {
                           <div className="text-sm text-gray-600">
                             <p>
                               Your property is priced at ${parseFloat(property.psf).toFixed(0)} per sqft, which is{' '}
-                              {parseFloat(property.psf) > (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length) ? 
-                                'above' : 'below'} the neighborhood average of ${Math.round(nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length)} per sqft.
+                              {parseFloat(property.psf) > (sameDistrictProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / sameDistrictProperties.length) ? 
+                                'above' : 'below'} the district average of ${Math.round(sameDistrictProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / sameDistrictProperties.length)} per sqft.
                             </p>
                             <p className="mt-2">
-                              Based on {nearbyProperties.length} comparable properties within 1km, your property offers {parseFloat(property.psf) > (nearbyProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / nearbyProperties.length) ? 'premium' : 'competitive'} pricing in this prime location.
+                              Based on {sameDistrictProperties.length} comparable properties in {property.district}, your property offers {parseFloat(property.psf) > (sameDistrictProperties.reduce((sum, p) => sum + parseFloat(p.psf), 0) / sameDistrictProperties.length) ? 'premium' : 'competitive'} pricing in this prime district.
                             </p>
                           </div>
                         </div>
@@ -718,7 +721,7 @@ export default function PropertyDetail() {
                     ) : (
                       <div className="text-center py-8">
                         <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No comparable properties found within 1km radius</p>
+                        <p className="text-gray-500">No comparable properties found in the same district</p>
                       </div>
                     )}
                   </div>

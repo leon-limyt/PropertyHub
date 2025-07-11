@@ -120,12 +120,12 @@ Preferred communication style: Simple, everyday language.
   - Custom property markers with info windows
   - Secure API key handling through server endpoint
   - Interactive map with zoom and pan capabilities
-- **Comparative Analysis Feature**: Added Investment tab with neighboring properties analysis
-  - Haversine distance calculation for 1km radius property search
+- **Comparative Analysis Feature**: Added Market Analysis tab with district-based property comparison
+  - District-based property comparison instead of 1km radius search
   - Comparative pricing analysis with percentage differences
-  - Summary statistics showing market positioning
+  - Summary statistics showing market positioning within district
   - Detailed comparison table with current property highlighted
-  - Market analysis insights and recommendations
+  - Market analysis insights and recommendations for district performance
 - **Mortgage Calculator**: Singapore MAS-compliant mortgage calculator
   - Total Debt Servicing Ratio (TDSR) calculation with 55% limit
   - Mortgage Servicing Ratio (MSR) calculation for HDB/EC with 30% limit

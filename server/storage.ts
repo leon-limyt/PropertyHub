@@ -44,6 +44,9 @@ export interface IStorage {
   
   // Neighboring Properties
   getNearbyProperties(lat: number, lng: number, radiusKm: number, excludeId?: number): Promise<Property[]>;
+  
+  // Same District Properties
+  getPropertiesByDistrict(district: string, excludeId?: number): Promise<Property[]>;
 }
 
 
@@ -278,6 +281,16 @@ export class DatabaseStorage implements IStorage {
 
   private toRadians(degrees: number): number {
     return degrees * (Math.PI / 180);
+  }
+
+  async getPropertiesByDistrict(district: string, excludeId?: number): Promise<Property[]> {
+    const conditions = [eq(properties.district, district)];
+    
+    if (excludeId) {
+      conditions.push(ne(properties.id, excludeId));
+    }
+    
+    return await db.select().from(properties).where(and(...conditions));
   }
 }
 

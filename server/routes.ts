@@ -78,22 +78,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Property not found" });
       }
       
-      if (!property.lat || !property.lng) {
-        return res.status(400).json({ message: "Property location coordinates not available" });
+      if (!property.district) {
+        return res.status(400).json({ message: "Property district not available" });
       }
       
-      const radius = parseFloat(req.query.radius as string) || 1; // Default 1km radius
-      const nearbyProperties = await storage.getNearbyProperties(
-        parseFloat(property.lat),
-        parseFloat(property.lng),
-        radius,
-        id
-      );
+      const sameDistrictProperties = await storage.getPropertiesByDistrict(property.district, id);
       
-      res.json(nearbyProperties);
+      res.json(sameDistrictProperties);
     } catch (error) {
-      console.error("Error fetching nearby properties:", error);
-      res.status(500).json({ message: "Failed to fetch nearby properties" });
+      console.error("Error fetching same district properties:", error);
+      res.status(500).json({ message: "Failed to fetch same district properties" });
     }
   });
 
