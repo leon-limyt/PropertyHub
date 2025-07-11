@@ -134,3 +134,13 @@ Preferred communication style: Simple, everyday language.
   - Variable income haircut (30%) as per MAS guidelines
   - Comprehensive eligibility assessment with warnings
   - Real-time calculation updates and detailed loan breakdown
+- **Advanced Filter Panel**: Added comprehensive left sidebar filter panel on Properties page
+  - District filter with all 28 Singapore districts plus Sentosa
+  - Tenure filter (Freehold, 99-year, 999-year, 103-year leasehold)
+  - Maximum price filter with SGD input
+  - TOP Year filter (2024-2030)
+  - MRT Distance filter (<100m, 100-300m, 300-600m, 600-900m, >900m)
+  - Primary School Distance filter (<1km, 1-2km, >2km)
+  - Property Type and Bedrooms filters
+  - Sticky positioning for easy access while browsing
+  - Active filter count badge and one-click reset functionality

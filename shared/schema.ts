@@ -123,6 +123,10 @@ export const searchPropertiesSchema = z.object({
   district: z.string().optional(),
   projectStatus: z.string().optional(),
   featured: z.boolean().optional(),
+  // Filter panel fields
+  topYear: z.number().optional(),
+  mrtDistance: z.string().optional(),
+  schoolDistance: z.string().optional(),
 });
 
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
