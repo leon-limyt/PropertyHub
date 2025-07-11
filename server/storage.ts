@@ -132,7 +132,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (params.district) {
-      conditions.push(ilike(properties.district, `%${params.district}%`));
+      conditions.push(eq(properties.district, params.district));
     }
 
     if (params.projectStatus) {
