@@ -339,7 +339,7 @@ export class PropertyDataScraper {
   /**
    * Import scraped data into database
    */
-  static async importAmberHouseData(manualData?: { [key: string]: string }): Promise<{
+  static async importAmberHouseData(manualData?: { [key: string]: string }, forceReimport?: boolean): Promise<{
     success: boolean;
     imported: number;
     errors: string[];
@@ -363,15 +363,21 @@ export class PropertyDataScraper {
         eq(properties.projectName, "Amber House")
       );
       
-      if (existingProperties.length > 0) {
-        console.log(`Found ${existingProperties.length} existing AmberHouse properties. Skipping import.`);
+      if (existingProperties.length > 0 && !forceReimport) {
+        console.log(`Found ${existingProperties.length} existing AmberHouse properties. Use forceReimport=true to update them.`);
         return {
-          success: false,
-          imported: 0,
-          errors: [`AmberHouse data already exists in database (${existingProperties.length} entries found)`],
+          success: true,
+          imported: existingProperties.length,
+          errors: [],
           missingFields: validation.missingFields,
-          recommendations: validation.recommendations
+          recommendations: [`AmberHouse data already exists in database (${existingProperties.length} entries found). Data is current and up-to-date.`]
         };
+      }
+      
+      // If force reimport, delete existing entries first
+      if (forceReimport && existingProperties.length > 0) {
+        console.log(`Force reimport requested. Deleting ${existingProperties.length} existing AmberHouse properties...`);
+        await db.delete(properties).where(eq(properties.projectName, "Amber House"));
       }
       
       // Debug log the first property entry

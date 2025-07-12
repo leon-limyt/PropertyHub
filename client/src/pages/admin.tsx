@@ -470,7 +470,7 @@ export default function Admin() {
                   {/* Import Button */}
                   <div className="flex items-center justify-between pt-4">
                     <div className="text-sm text-gray-600">
-                      This will create {validation.unitVariants} property entries in your database
+                      {validation.unitVariants} property variants ready for import
                     </div>
                     <Button
                       onClick={handleImport}
