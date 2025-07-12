@@ -423,11 +423,21 @@ export default function Admin() {
           setImportStatus(null);
         }, 3000);
       } else {
-        toast({
-          title: "⚠️ Import Completed with Warnings",
-          description: data.message || "Import completed but with some issues.",
-          duration: 5000,
-        });
+        // Handle duplicate import case
+        if (data.message && data.message.includes("already exists")) {
+          toast({
+            title: "⚠️ Duplicate Import Blocked",
+            description: data.message,
+            variant: "destructive",
+            duration: 5000,
+          });
+        } else {
+          toast({
+            title: "⚠️ Import Completed with Warnings",
+            description: data.message || "Import completed but with some issues.",
+            duration: 5000,
+          });
+        }
       }
     },
     onError: (error) => {

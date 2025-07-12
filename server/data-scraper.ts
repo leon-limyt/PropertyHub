@@ -590,9 +590,9 @@ export class PropertyDataScraper {
       
       if (existingProperties.length > 0 && !forceReimport) {
         return {
-          success: true,
-          message: `UpperHouse at Orchard Boulevard already exists in database (${existingProperties.length} entries found). Data is current and up-to-date.`,
-          imported: existingProperties.length
+          success: false,
+          message: `UpperHouse at Orchard Boulevard already exists, data import will not be executed`,
+          imported: 0
         };
       }
       
@@ -672,11 +672,11 @@ export class PropertyDataScraper {
       if (existingProperties.length > 0 && !forceReimport) {
         console.log(`Found ${existingProperties.length} existing AmberHouse properties. Use forceReimport=true to update them.`);
         return {
-          success: true,
-          imported: existingProperties.length,
+          success: false,
+          imported: 0,
           errors: [],
           missingFields: validation.missingFields,
-          recommendations: [`AmberHouse data already exists in database (${existingProperties.length} entries found). Data is current and up-to-date.`]
+          recommendations: [`AmberHouse already exists, data import will not be executed`]
         };
       }
       
