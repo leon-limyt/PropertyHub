@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign, Settings, Globe, Building, Users, Flag } from "lucide-react";
 
 interface ValidationResult {
@@ -117,6 +118,7 @@ export default function Admin() {
   const [manualData, setManualData] = useState<ManualEntryData>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("Core");
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const { toast } = useToast();
 
   // Helper functions
   const updateManualData = (field: string, value: string | boolean) => {
@@ -350,12 +352,35 @@ export default function Admin() {
     },
     onSuccess: (data) => {
       setImportStatus(data);
+      
+      // Show success toast notification
+      if (data.success) {
+        toast({
+          title: "✅ Import Successful",
+          description: `${data.imported} AmberHouse property variants are now available in your database.`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "⚠️ Import Completed with Warnings",
+          description: data.message || "Import completed but with some issues.",
+          duration: 5000,
+        });
+      }
     },
     onError: (error) => {
       setImportStatus({
         success: false,
         message: "Failed to import data",
         errors: [error instanceof Error ? error.message : "Unknown error"],
+      });
+      
+      // Show error toast notification
+      toast({
+        title: "❌ Import Failed",
+        description: "There was an error importing the AmberHouse data. Please check the details below.",
+        variant: "destructive",
+        duration: 5000,
       });
     },
   });
