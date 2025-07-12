@@ -163,6 +163,8 @@ Preferred communication style: Simple, everyday language.
   - Improved data accuracy verification process for all scraped properties
   - Fixed unit variant display logic to show "1 property ready for import" instead of "5 property variants"
   - Ensured single consolidated property entries to prevent duplication from multiple unit variants
+  - Implemented proper duplicate import prevention with correct HTTP status codes (200 instead of 500)
+  - Added specific error messaging for duplicate imports with proper frontend alert handling
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation

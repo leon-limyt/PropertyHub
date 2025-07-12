@@ -186,7 +186,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           imported: result.imported
         });
       } else {
-        res.status(500).json({
+        // For duplicate imports, return 200 OK with success: false
+        res.json({
           success: false,
           message: result.message,
           errors: result.errors
@@ -217,9 +218,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           recommendations: result.recommendations
         });
       } else {
-        res.status(500).json({
+        // For duplicate imports, return 200 OK with success: false
+        res.json({
           success: false,
-          message: "Failed to import AmberHouse data",
+          message: result.recommendations && result.recommendations.length > 0 ? result.recommendations[0] : "Failed to import AmberHouse data",
           errors: result.errors,
           missingFields: result.missingFields,
           recommendations: result.recommendations
