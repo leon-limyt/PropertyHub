@@ -130,6 +130,7 @@ export default function Admin() {
   const [isFormCleared, setIsFormCleared] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
+  const [isPdfData, setIsPdfData] = useState(false);
   const { toast } = useToast();
 
   // Helper functions
@@ -398,15 +399,29 @@ export default function Admin() {
     setImportStatus(null);
     setScrapeUrl("");
     setIsFormCleared(false);
+    setIsPdfData(false);
+    setSelectedFile(null);
   }, [selectedProperty]);
 
   // Import property data dynamically
   const importMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", `/api/admin/import/${selectedProperty}`, {
-        manualData: manualData,
-      });
-      return await response.json();
+      // Check if we're importing from PDF-extracted data
+      if (isPdfData && manualData.title) {
+        // PDF import - use the PDF import endpoint
+        const response = await apiRequest("POST", "/api/admin/import-pdf", {
+          extractedData: manualData,
+          manualData: manualData,
+          forceReimport: false
+        });
+        return await response.json();
+      } else {
+        // Regular property import - use the existing endpoint
+        const response = await apiRequest("POST", `/api/admin/import/${selectedProperty}`, {
+          manualData: manualData,
+        });
+        return await response.json();
+      }
     },
     onSuccess: (data) => {
       setImportStatus(data);
@@ -423,6 +438,8 @@ export default function Admin() {
         setManualData({});
         setIsDataLoaded(false);
         setScrapeUrl("");
+        setIsPdfData(false);
+        setSelectedFile(null);
         
         // Clear import status after showing success message
         setTimeout(() => {
@@ -474,6 +491,8 @@ export default function Admin() {
     setScrapeUrl("");
     setImportStatus(null);
     setIsFormCleared(true);
+    setIsPdfData(false);
+    setSelectedFile(null);
     
     // Reset the selected category to the first tab
     setSelectedCategory("Core");
@@ -570,6 +589,7 @@ export default function Admin() {
         setManualData(result.data);
         setIsDataLoaded(true);
         setIsFormCleared(false);
+        setIsPdfData(true);
         
         toast({
           title: "✅ PDF Processed Successfully",

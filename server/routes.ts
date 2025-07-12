@@ -367,6 +367,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PDF data import endpoint
+  app.post("/api/admin/import-pdf", async (req, res) => {
+    try {
+      const { extractedData, manualData, forceReimport } = req.body;
+      
+      if (!extractedData || !extractedData.title) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid extracted data provided"
+        });
+      }
+
+      // Combine extracted data with manual data
+      const combinedData = { ...extractedData, ...manualData };
+      
+      // Check if property already exists
+      const existingProperty = await storage.searchProperties({
+        search: combinedData.title,
+        limit: 1
+      });
+
+      if (existingProperty.length > 0 && !forceReimport) {
+        return res.status(200).json({
+          success: false,
+          message: `${combinedData.title} already exists, data import will not be executed`,
+          imported: 0
+        });
+      }
+
+      // Convert to database format
+      const propertyEntries = PropertyDataScraper.convertToPropertyEntries({
+        title: combinedData.title,
+        description: combinedData.description || '',
+        projectName: combinedData.projectName || combinedData.title,
+        developerName: combinedData.developerName || '',
+        address: combinedData.address || '',
+        district: combinedData.district || '',
+        country: combinedData.country || 'Singapore',
+        postalCode: combinedData.postalCode || '',
+        propertyType: combinedData.propertyType || 'Condominium',
+        tenure: combinedData.tenure || '',
+        noOfUnits: parseInt(combinedData.noOfUnits) || 0,
+        noOfBlocks: parseInt(combinedData.noOfBlocks) || 1,
+        storeyRange: combinedData.storeyRange || '',
+        siteAreaSqm: combinedData.siteAreaSqm || '',
+        priceFrom: parseInt(combinedData.price) || 0,
+        psfFrom: parseInt(combinedData.psf) || 0,
+        unitMix: [],
+        launchDate: combinedData.launchDate || '',
+        completionDate: combinedData.completionDate || '',
+        expectedTOP: combinedData.expectedTOP || '',
+        nearbySchools: [],
+        nearbyMRT: [],
+        nearbyAmenities: [],
+        projectStatus: combinedData.projectStatus || 'available',
+        launchType: combinedData.launchType || 'new-launch',
+        missingFields: [],
+        imageUrls: []
+      }, combinedData);
+
+      // Import into database
+      let importedCount = 0;
+      for (const property of propertyEntries) {
+        try {
+          await storage.createProperty(property);
+          importedCount++;
+        } catch (error) {
+          console.error('Failed to import property:', error);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully imported ${importedCount} property entries`,
+        imported: importedCount
+      });
+    } catch (error) {
+      console.error('PDF import error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to import PDF data",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Full scraped data endpoints
   app.get("/api/admin/scraped-data/upperhouse", async (req, res) => {
     try {
