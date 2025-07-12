@@ -168,6 +168,9 @@ Preferred communication style: Simple, everyday language.
   - Enhanced URL scraping system with comprehensive data extraction for 15+ property fields
   - Added HTML tag cleaning function to prevent HTML content in scraped data fields
   - Removed unwanted Investment tab by reorganizing field categories in admin interface
+  - Implemented advanced multi-pattern extraction with 40+ regex patterns for robust data capture
+  - Added proper HTTP headers and error handling for reliable web scraping
+  - Enhanced field-specific processing for districts, units, addresses, and descriptions
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation

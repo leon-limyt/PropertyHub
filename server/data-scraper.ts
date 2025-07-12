@@ -90,208 +90,204 @@ export class PropertyDataScraper {
   }
 
   /**
-   * Scrape property data from any URL
+   * Scrape property data from any URL using advanced extraction patterns
    */
   static async scrapeFromUrl(url: string): Promise<{ [key: string]: string }> {
     try {
-      // For server-side, we'll use a basic pattern recognition approach
-      // In a real implementation, you'd use a proper HTML parser like cheerio
       let content = '';
       
-      // Try to fetch content (this will work for basic HTML pages)
+      // Fetch content with proper headers
       try {
         const response = await fetch(url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
           }
         });
         
         if (response.ok) {
           content = await response.text();
         } else {
-          // If direct fetch fails, return basic extracted data
-          content = `Title: Property Listing from ${url}`;
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
       } catch (fetchError) {
-        // If fetch fails, return basic extracted data
-        content = `Title: Property Listing from ${url}`;
+        throw new Error(`Failed to fetch URL: ${fetchError instanceof Error ? fetchError.message : 'Network error'}`);
       }
       
-      // Basic property data extraction using common patterns
+      // Initialize extracted data
       const extractedData: { [key: string]: string } = {};
       
-      // Extract title - look for common title patterns
-      const titleMatch = content.match(/<title[^>]*>([^<]+)<\/title>/i) || 
-                        content.match(/# ([^\n]+)/m) ||
-                        content.match(/## ([^\n]+)/m);
-      if (titleMatch) {
-        extractedData.title = this.cleanHtmlText(titleMatch[1]);
+      // Clean and prepare content for extraction
+      const cleanContent = this.cleanHtmlText(content);
+      const lines = cleanContent.split('\n').filter(line => line.trim().length > 0);
+      
+      // Extract title from multiple sources
+      const titlePatterns = [
+        /<title[^>]*>([^<]+)<\/title>/i,
+        /<h1[^>]*>([^<]+)<\/h1>/i,
+        /property\s*name\s*:?\s*([^\n,|]+)/i,
+        /project\s*name\s*:?\s*([^\n,|]+)/i
+      ];
+      
+      for (const pattern of titlePatterns) {
+        const match = content.match(pattern);
+        if (match && !extractedData.title) {
+          extractedData.title = this.cleanHtmlText(match[1]);
+          extractedData.projectName = this.cleanHtmlText(match[1]);
+          break;
+        }
       }
       
-      // Enhanced property data extraction
-      const lines = content.split('\n');
-      const fullText = content.toLowerCase();
+      // Advanced multi-pattern extraction for each field
+      const extractionPatterns = {
+        developer: [
+          /developer\s*:?\s*([^\n,|<>]+)/i,
+          /developed\s*by\s*:?\s*([^\n,|<>]+)/i,
+          /builder\s*:?\s*([^\n,|<>]+)/i,
+          /by\s+([A-Z][^,\n|<>]+(?:pte|ltd|group|development|properties)[^,\n|<>]*)/i
+        ],
+        district: [
+          /district\s*:?\s*([^\n,|<>]+)/i,
+          /D(\d+)/i,
+          /district\s+(\d+)/i,
+          /location\s*:?\s*district\s*(\d+)/i
+        ],
+        address: [
+          /address\s*:?\s*([^\n,|<>]+singapore[^,\n|<>]*)/i,
+          /location\s*:?\s*([^\n,|<>]+singapore[^,\n|<>]*)/i,
+          /([^,\n|<>]+,\s*singapore\s*\d{6})/i,
+          /situated\s*(?:at|in)\s*([^\n,|<>]+)/i
+        ],
+        postalCode: [
+          /singapore\s*(\d{6})/i,
+          /postal\s*code\s*:?\s*(\d{6})/i,
+          /(\d{6})/
+        ],
+        propertyType: [
+          /property\s*type\s*:?\s*([^\n,|<>]+)/i,
+          /type\s*:?\s*(condominium|apartment|executive|landed|townhouse|penthouse)/i,
+          /(condominium|apartment|executive condominium|landed house|townhouse|penthouse)/i
+        ],
+        tenure: [
+          /tenure\s*:?\s*([^\n,|<>]+)/i,
+          /(freehold|leasehold|99-year|999-year|103-year)/i,
+          /land\s*tenure\s*:?\s*([^\n,|<>]+)/i
+        ],
+        noOfUnits: [
+          /total\s*units?\s*:?\s*(\d+)/i,
+          /units?\s*:?\s*(\d+)/i,
+          /(\d+)\s*units?/i,
+          /number\s*of\s*units?\s*:?\s*(\d+)/i
+        ],
+        noOfBlocks: [
+          /blocks?\s*:?\s*(\d+)/i,
+          /towers?\s*:?\s*(\d+)/i,
+          /buildings?\s*:?\s*(\d+)/i,
+          /(\d+)\s*blocks?/i
+        ],
+        storeyRange: [
+          /storey\s*:?\s*([^\n,|<>]+)/i,
+          /floors?\s*:?\s*([^\n,|<>]+)/i,
+          /(\d+)\s*storey/i,
+          /(\d+)\s*floors?/i,
+          /height\s*:?\s*([^\n,|<>]+)/i
+        ],
+        siteAreaSqm: [
+          /site\s*area\s*:?\s*([^\n,|<>]+)/i,
+          /land\s*area\s*:?\s*([^\n,|<>]+)/i,
+          /(\d+(?:,\d+)*)\s*sqm/i,
+          /(\d+(?:,\d+)*)\s*sq\.?\s*m/i
+        ],
+        plotRatio: [
+          /plot\s*ratio\s*:?\s*([^\n,|<>]+)/i,
+          /gpr\s*:?\s*([^\n,|<>]+)/i,
+          /gross\s*plot\s*ratio\s*:?\s*([^\n,|<>]+)/i
+        ],
+        launchDate: [
+          /launch\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
+          /expected\s*launch\s*:?\s*([^\n,|<>]+)/i,
+          /preview\s*:?\s*([^\n,|<>]+)/i
+        ],
+        completionDate: [
+          /completion\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
+          /expected\s*completion\s*:?\s*([^\n,|<>]+)/i,
+          /top\s*:?\s*([^\n,|<>]+)/i,
+          /ready\s*:?\s*([^\n,|<>]+)/i
+        ],
+        planningArea: [
+          /planning\s*area\s*:?\s*([^\n,|<>]+)/i,
+          /area\s*:?\s*([A-Z][^,\n|<>]{3,20})/i,
+          /region\s*:?\s*([^\n,|<>]+)/i
+        ],
+        mrtNearby: [
+          /mrt\s*:?\s*([^\n,|<>]+)/i,
+          /nearest\s*mrt\s*:?\s*([^\n,|<>]+)/i,
+          /([^,\n|<>]+mrt)/i,
+          /transport\s*:?\s*([^\n,|<>]+mrt[^\n,|<>]*)/i
+        ],
+        primarySchoolsWithin1km: [
+          /schools?\s*:?\s*([^\n,|<>]+)/i,
+          /primary\s*schools?\s*:?\s*([^\n,|<>]+)/i,
+          /nearby\s*schools?\s*:?\s*([^\n,|<>]+)/i,
+          /education\s*:?\s*([^\n,|<>]+)/i
+        ]
+      };
       
-      // Extract more comprehensive property information
-      for (const line of lines) {
-        const cleanLine = this.cleanHtmlText(line);
-        
-        // District extraction
-        if (cleanLine.includes('district') || cleanLine.includes('D')) {
-          const districtMatch = cleanLine.match(/district\s*:?\s*([^\n,|]+)/i) || 
-                              cleanLine.match(/D(\d+)/i) ||
-                              cleanLine.match(/district\s+(\d+)/i);
-          if (districtMatch) {
-            extractedData.district = `District ${districtMatch[1]}`;
-          }
-        }
-        
-        // Developer extraction
-        if (cleanLine.includes('developer') || cleanLine.includes('developed by')) {
-          const developerMatch = cleanLine.match(/(?:developer|developed by)\s*:?\s*([^\n,|]+)/i);
-          if (developerMatch) {
-            extractedData.developerName = this.cleanHtmlText(developerMatch[1]);
-          }
-        }
-        
-        // Units extraction
-        if (cleanLine.includes('units') || cleanLine.includes('total units')) {
-          const unitsMatch = cleanLine.match(/(?:total\s+)?units?\s*:?\s*(\d+)/i);
-          if (unitsMatch) {
-            extractedData.noOfUnits = unitsMatch[1];
-          }
-        }
-        
-        // Blocks extraction
-        if (cleanLine.includes('blocks') || cleanLine.includes('towers')) {
-          const blocksMatch = cleanLine.match(/(?:blocks?|towers?)\s*:?\s*(\d+)/i);
-          if (blocksMatch) {
-            extractedData.noOfBlocks = blocksMatch[1];
-          }
-        }
-        
-        // Tenure extraction
-        if (cleanLine.includes('tenure') || cleanLine.includes('freehold') || cleanLine.includes('leasehold')) {
-          const tenureMatch = cleanLine.match(/tenure\s*:?\s*([^\n,|]+)/i) ||
-                             cleanLine.match(/(freehold|leasehold|99-year|999-year|103-year)/i);
-          if (tenureMatch) {
-            extractedData.tenure = this.cleanHtmlText(tenureMatch[1]);
-          }
-        }
-        
-        // Address extraction
-        if (cleanLine.includes('address') || cleanLine.includes('location') || cleanLine.includes('singapore')) {
-          const addressMatch = cleanLine.match(/(?:address|location)\s*:?\s*([^\n,|]+)/i) ||
-                              cleanLine.match(/([^,]+,\s*singapore\s*\d{6})/i);
-          if (addressMatch) {
-            extractedData.address = this.cleanHtmlText(addressMatch[1]);
-            extractedData.location = this.cleanHtmlText(addressMatch[1]);
-          }
-        }
-        
-        // Postal code extraction
-        if (cleanLine.includes('singapore') && cleanLine.match(/\d{6}/)) {
-          const postalMatch = cleanLine.match(/singapore\s*(\d{6})/i);
-          if (postalMatch) {
-            extractedData.postalCode = postalMatch[1];
-          }
-        }
-        
-        // Property type extraction
-        if (cleanLine.includes('property type') || cleanLine.includes('condominium') || cleanLine.includes('apartment')) {
-          const typeMatch = cleanLine.match(/(?:property\s*type)\s*:?\s*([^\n,|]+)/i) ||
-                           cleanLine.match(/(condominium|apartment|executive condominium|landed house|townhouse|penthouse)/i);
-          if (typeMatch) {
-            extractedData.propertyType = this.cleanHtmlText(typeMatch[1]);
-          }
-        }
-        
-        // Site area extraction
-        if (cleanLine.includes('site area') || cleanLine.includes('sqm')) {
-          const siteAreaMatch = cleanLine.match(/site\s*area\s*:?\s*([^\n,|]+)/i) ||
-                               cleanLine.match(/(\d+(?:,\d+)*)\s*sqm/i);
-          if (siteAreaMatch) {
-            extractedData.siteAreaSqm = siteAreaMatch[1].replace(/,/g, '');
-          }
-        }
-        
-        // Storey range extraction
-        if (cleanLine.includes('storey') || cleanLine.includes('floors')) {
-          const storeyMatch = cleanLine.match(/(?:storey|floors?)\s*:?\s*([^\n,|]+)/i) ||
-                             cleanLine.match(/(\d+)\s*(?:storey|floors?)/i);
-          if (storeyMatch) {
-            extractedData.storeyRange = this.cleanHtmlText(storeyMatch[1]);
-          }
-        }
-        
-        // Planning area extraction
-        if (cleanLine.includes('planning area') || cleanLine.includes('area')) {
-          const planningMatch = cleanLine.match(/planning\s*area\s*:?\s*([^\n,|]+)/i);
-          if (planningMatch) {
-            extractedData.planningArea = this.cleanHtmlText(planningMatch[1]);
-          }
-        }
-        
-        // Launch date extraction
-        if (cleanLine.includes('launch') && cleanLine.match(/\d{4}/)) {
-          const launchMatch = cleanLine.match(/launch\s*:?\s*([^\n,|]+)/i) ||
-                             cleanLine.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
-          if (launchMatch) {
-            extractedData.launchDate = this.cleanHtmlText(launchMatch[1]);
-          }
-        }
-        
-        // Completion date extraction
-        if (cleanLine.includes('completion') || cleanLine.includes('top')) {
-          const completionMatch = cleanLine.match(/(?:completion|top)\s*:?\s*([^\n,|]+)/i) ||
-                                 cleanLine.match(/(\d{4})/);
-          if (completionMatch) {
-            extractedData.completionDate = this.cleanHtmlText(completionMatch[1]);
-          }
-        }
-        
-        // Plot ratio extraction
-        if (cleanLine.includes('plot ratio') || cleanLine.includes('gpr')) {
-          const plotMatch = cleanLine.match(/(?:plot\s*ratio|gpr)\s*:?\s*([^\n,|]+)/i);
-          if (plotMatch) {
-            extractedData.plotRatio = this.cleanHtmlText(plotMatch[1]);
-          }
-        }
-        
-        // MRT extraction
-        if (cleanLine.includes('mrt') || cleanLine.includes('station')) {
-          const mrtMatch = cleanLine.match(/([^,]+(?:mrt|station))/i);
-          if (mrtMatch) {
-            extractedData.mrtNearby = this.cleanHtmlText(mrtMatch[1]);
-          }
-        }
-        
-        // Schools extraction
-        if (cleanLine.includes('school') || cleanLine.includes('primary')) {
-          const schoolMatch = cleanLine.match(/([^,]+(?:school|primary))/i);
-          if (schoolMatch) {
-            extractedData.primarySchoolsWithin1km = this.cleanHtmlText(schoolMatch[1]);
+      // Apply extraction patterns
+      for (const [field, patterns] of Object.entries(extractionPatterns)) {
+        for (const pattern of patterns) {
+          const match = cleanContent.match(pattern);
+          if (match && match[1] && !extractedData[field]) {
+            let value = this.cleanHtmlText(match[1]).trim();
+            
+            // Special processing for certain fields
+            if (field === 'district' && /^\d+$/.test(value)) {
+              value = `District ${value}`;
+            }
+            if (field === 'siteAreaSqm') {
+              value = value.replace(/,/g, '').replace(/[^\d]/g, '');
+            }
+            if (field === 'noOfUnits' || field === 'noOfBlocks') {
+              value = value.replace(/[^\d]/g, '');
+            }
+            
+            if (value.length > 0 && value.length < 200) {
+              extractedData[field] = value;
+            }
+            break;
           }
         }
       }
       
-      // Extract description - look for longer text blocks and project descriptions
-      const descriptionMatch = content.match(/description[^>]*>([^<]+)/i) ||
-                              content.match(/project\s*description[^>]*>([^<]+)/i) ||
-                              content.match(/about[^>]*>([^<]{100,})/i) ||
-                              content.match(/overview[^>]*>([^<]{100,})/i) ||
-                              content.match(/\n\n([^#\n][^\n]{100,})/);
-      if (descriptionMatch) {
-        extractedData.description = this.cleanHtmlText(descriptionMatch[1]);
-        extractedData.projectDescription = this.cleanHtmlText(descriptionMatch[1]);
+      // Extract description from multiple sources
+      const descriptionPatterns = [
+        /description\s*:?\s*([^<\n]{100,})/i,
+        /project\s*description\s*:?\s*([^<\n]{100,})/i,
+        /about\s*:?\s*([^<\n]{100,})/i,
+        /overview\s*:?\s*([^<\n]{100,})/i,
+        /summary\s*:?\s*([^<\n]{100,})/i
+      ];
+      
+      for (const pattern of descriptionPatterns) {
+        const match = cleanContent.match(pattern);
+        if (match && match[1] && !extractedData.description) {
+          const desc = this.cleanHtmlText(match[1]).trim();
+          if (desc.length > 50) {
+            extractedData.description = desc;
+            extractedData.projectDescription = desc;
+            break;
+          }
+        }
       }
       
-      // Default values
+      // Set default values
       extractedData.country = "Singapore";
       extractedData.status = "available";
       extractedData.launchType = "new-launch";
-      
-      // Set price and PSF to empty if not found (maintain data integrity)
       extractedData.price = "";
       extractedData.psf = "";
       extractedData.bedrooms = "";
