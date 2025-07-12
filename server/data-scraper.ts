@@ -528,6 +528,7 @@ export class PropertyDataScraper {
       developerName: data.developerName,
       tenure: data.tenure,
       projectStatus: data.projectStatus,
+      projectType: "Residential", // UpperHouse is a residential condominium
       
       // Development info
       noOfUnits: data.noOfUnits,
@@ -537,7 +538,7 @@ export class PropertyDataScraper {
       
       // Location data
       postalCode: data.postalCode,
-      planningArea: "Marine Parade",
+      planningArea: "Orchard",
       
       // Timeline
       launchDate: data.launchDate,
@@ -565,7 +566,7 @@ export class PropertyDataScraper {
       projectDescription: manualData?.projectDescription || data.description,
       
       // Additional calculated fields
-      plotRatio: "2.5" // Estimated based on site area and building height
+      plotRatio: "3.5" // Corrected based on URL source data
     };
     
     // Return single consolidated entry

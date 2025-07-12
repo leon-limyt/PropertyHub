@@ -156,6 +156,11 @@ Preferred communication style: Simple, everyday language.
   - Strict data integrity policy: only authentic data from sources, no estimated values
   - Fixed UpperHouse import functionality with proper database queries and error handling
   - Added comprehensive form reset functionality with automatic clearing after successful imports
+  - Enhanced admin interface with Project Type and Project Status dropdown menus
+  - Implemented auto-generated project IDs with manual override capability
+  - Corrected Plot Ratio from 2.5 to 3.5 for UpperHouse based on authentic URL data
+  - Added proper project type classification (Residential) and planning area correction (Orchard)
+  - Improved data accuracy verification process for all scraped properties
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation

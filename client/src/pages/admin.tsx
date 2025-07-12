@@ -83,11 +83,15 @@ const PROPERTY_FIELDS = {
   expectedRoi: { label: "Expected ROI (%)", type: "number", category: "Investment", required: false },
   
   // Project Details
-  projectId: { label: "Project ID", type: "text", category: "Project", required: false },
+  projectId: { label: "Project ID", type: "text", category: "Project", required: false, autoGenerate: true },
   projectName: { label: "Project Name", type: "text", category: "Project", required: false },
   developerName: { label: "Developer Name", type: "text", category: "Project", required: false },
-  projectType: { label: "Project Type", type: "text", category: "Project", required: false },
-  tenure: { label: "Tenure", type: "text", category: "Project", required: false },
+  projectType: { label: "Project Type", type: "select", category: "Project", required: false, options: [
+    "Residential", "Commercial", "Mixed Development", "Industrial", "Retail", "Office", "Hospitality", "Institutional"
+  ]},
+  tenure: { label: "Tenure", type: "select", category: "Project", required: false, options: [
+    "Freehold", "99-year Leasehold", "999-year Leasehold", "103-year Leasehold", "60-year Leasehold", "30-year Leasehold"
+  ]},
   planningArea: { label: "Planning Area", type: "text", category: "Project", required: false },
   address: { label: "Full Address", type: "text", category: "Project", required: false },
   postalCode: { label: "Postal Code", type: "text", category: "Project", required: false },
@@ -99,7 +103,9 @@ const PROPERTY_FIELDS = {
   siteAreaSqm: { label: "Site Area (sqm)", type: "number", category: "Project", required: false },
   plotRatio: { label: "Plot Ratio", type: "number", category: "Project", required: false },
   projectDescription: { label: "Project Description", type: "textarea", category: "Project", required: false },
-  projectStatus: { label: "Project Status", type: "text", category: "Project", required: false },
+  projectStatus: { label: "Project Status", type: "select", category: "Project", required: false, options: [
+    "Planning", "Construction", "Completed", "Launched", "Sold Out", "Delayed", "Cancelled", "Under Review"
+  ]},
   
   // Location Details
   lat: { label: "Latitude", type: "number", category: "Location", required: false },
@@ -126,6 +132,12 @@ export default function Admin() {
   // Helper functions
   const updateManualData = (field: string, value: string | boolean) => {
     setManualData(prev => ({ ...prev, [field]: value.toString() }));
+  };
+
+  const generateProjectId = () => {
+    const timestamp = Date.now().toString(36);
+    const randomStr = Math.random().toString(36).substr(2, 5);
+    return `PROJ-${timestamp}-${randomStr}`.toUpperCase();
   };
 
   const getFieldsByCategory = (category: string) => {
@@ -193,6 +205,31 @@ export default function Admin() {
           </Select>
         );
       default:
+        // Handle auto-generated fields
+        if (field.autoGenerate && fieldKey === "projectId") {
+          return (
+            <div className="flex gap-2 mt-1">
+              <Input
+                id={fieldKey}
+                type={field.type}
+                placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
+                value={value}
+                onChange={(e) => updateManualData(fieldKey, e.target.value)}
+                className="flex-1"
+                step={field.type === "number" ? "0.01" : undefined}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => updateManualData(fieldKey, generateProjectId())}
+                className="px-3"
+              >
+                Generate
+              </Button>
+            </div>
+          );
+        }
         return (
           <Input
             id={fieldKey}
@@ -264,7 +301,9 @@ export default function Admin() {
           noOfBlocks: fullScrapedData.noOfBlocks.toString(),
           storeyRange: fullScrapedData.storeyRange,
           siteAreaSqm: fullScrapedData.siteAreaSqm,
-          plotRatio: "2.5",
+          plotRatio: "3.5",
+          projectId: generateProjectId(),
+          projectType: "Residential",
           launchDate: fullScrapedData.launchDate,
           completionDate: fullScrapedData.completionDate,
           projectStatus: fullScrapedData.projectStatus,
@@ -312,7 +351,9 @@ export default function Admin() {
           noOfBlocks: "1",
           storeyRange: "16 Storeys",
           siteAreaSqm: "3801.4",
-          plotRatio: "2.5",
+          plotRatio: "3.5",
+          projectId: generateProjectId(),
+          projectType: "Residential",
           launchDate: "2025-06-28",
           completionDate: validation.previewData.completionDate,
           projectStatus: "Open for Booking",
