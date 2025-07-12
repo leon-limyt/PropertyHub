@@ -303,149 +303,45 @@ export default function Admin() {
           <p className="text-gray-600">Manage property data imports and validate scraped information</p>
         </div>
 
-        {/* AmberHouse Data Import Section */}
+        {/* Property Data Editor */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Database className="h-5 w-5 mr-2" />
-              AmberHouse Data Import
+              <Settings className="h-5 w-5 mr-2" />
+              Property Data Editor
             </CardTitle>
             <CardDescription>
-              Import real property data scraped from propertyreviewsg.com
+              Fill in or override property fields. This universal editor can handle any property data source.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {validationLoading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Validating data...</span>
+                <span className="ml-2 text-gray-600">Loading data...</span>
               </div>
             ) : validation ? (
               <div className="space-y-6">
-                {/* Project Overview */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-3">Project Overview</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">Project Name</p>
-                      <p className="font-medium text-blue-900">{validation.projectName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">Developer</p>
-                      <p className="font-medium text-blue-900">{validation.developer}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">Address</p>
-                      <p className="font-medium text-blue-900">{validation.previewData.address}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">District</p>
-                      <p className="font-medium text-blue-900">{validation.previewData.district}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">Tenure</p>
-                      <p className="font-medium text-blue-900">{validation.previewData.tenure}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">Total Units</p>
-                      <p className="font-medium text-blue-900">{validation.previewData.totalUnits}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">Price Range</p>
-                      <p className="font-medium text-blue-900">{validation.previewData.priceRange}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-700 mb-1">PSF Range</p>
-                      <p className="font-medium text-blue-900">{validation.previewData.psfRange}</p>
-                    </div>
+                {/* Load Data Button */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">
+                      Load scraped AmberHouse data into the form fields below, or enter property details manually.
+                    </p>
                   </div>
-                </div>
-
-                {/* Unit Variants */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Unit Variants</h3>
-                  <Badge variant="secondary" className="text-sm">
-                    {validation.unitVariants} different unit types will be imported
-                  </Badge>
-                </div>
-
-                <Separator />
-
-                {/* Validation Status */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Data Validation</h3>
-                  
-                  {validation.validation.isValid ? (
-                    <Alert className="border-green-200 bg-green-50">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <AlertDescription className="text-green-800">
-                        All required fields are present. Ready for import.
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert className="border-orange-200 bg-orange-50">
-                      <AlertTriangle className="h-4 w-4 text-orange-600" />
-                      <AlertDescription className="text-orange-800">
-                        Some fields are missing but import can proceed. See missing fields below.
-                      </AlertDescription>
-                    </Alert>
+                  {!isDataLoaded && (
+                    <Button
+                      onClick={loadScrapedData}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Load AmberHouse Data
+                    </Button>
                   )}
                 </div>
 
-                {/* Missing Fields */}
-                {validation.validation.missingFields.length > 0 && (
-                  <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Missing Fields</h4>
-                    <div className="space-y-1">
-                      {validation.validation.missingFields.map((field, index) => (
-                        <Badge key={index} variant="outline" className="text-orange-700 border-orange-200">
-                          {field}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recommendations */}
-                {validation.validation.recommendations.length > 0 && (
-                  <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Recommendations</h4>
-                    <div className="space-y-2">
-                      {validation.validation.recommendations.map((rec, index) => (
-                        <div key={index} className="flex items-start">
-                          <Info className="h-4 w-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
-                          <p className="text-sm text-gray-700">{rec}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Universal Property Data Editor */}
-                <div className="border rounded-lg p-6 bg-gray-50">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Settings className="h-5 w-5 mr-2 text-blue-500" />
-                        Property Data Editor
-                      </h4>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Fill in or override property fields. This universal editor can handle any property data source.
-                      </p>
-                    </div>
-                    {!isDataLoaded && (
-                      <Button
-                        onClick={loadScrapedData}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Load AmberHouse Data
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+                <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
                     <TabsList className="grid w-full grid-cols-6">
                       {getCategories().map((category) => {
                         const Icon = getCategoryIcon(category);
@@ -501,31 +397,30 @@ export default function Admin() {
                       )}
                     </div>
                   </div>
-                </div>
 
-                {/* Import Button */}
-                <div className="flex items-center justify-between pt-4">
-                  <div className="text-sm text-gray-600">
-                    This will create {validation.unitVariants} property entries in your database
+                  {/* Import Button */}
+                  <div className="flex items-center justify-between pt-4">
+                    <div className="text-sm text-gray-600">
+                      This will create {validation.unitVariants} property entries in your database
+                    </div>
+                    <Button
+                      onClick={handleImport}
+                      disabled={importMutation.isPending}
+                      className="btn-primary"
+                    >
+                      {importMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4 mr-2" />
+                          Import AmberHouse Data
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={handleImport}
-                    disabled={importMutation.isPending}
-                    className="btn-primary"
-                  >
-                    {importMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Import AmberHouse Data
-                      </>
-                    )}
-                  </Button>
-                </div>
               </div>
             ) : (
               <Alert>
