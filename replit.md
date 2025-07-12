@@ -154,6 +154,8 @@ Preferred communication style: Simple, everyday language.
   - Imported 7 AmberHouse property variants with authentic pricing and specifications
   - Real estate data includes developer info, tenure, completion dates, and unit specifications
   - Strict data integrity policy: only authentic data from sources, no estimated values
+  - Fixed UpperHouse import functionality with proper database queries and error handling
+  - Added comprehensive form reset functionality with automatic clearing after successful imports
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation

@@ -177,16 +177,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { manualData } = req.body;
       const result = await PropertyDataScraper.importUpperHouseData(manualData);
       
+      console.log('Import result:', result);
+      
       if (result.success) {
         res.json({
           success: true,
-          message: `Successfully imported ${result.imported} UpperHouse property entries`,
+          message: result.message,
           imported: result.imported
         });
       } else {
         res.status(500).json({
           success: false,
-          message: "Failed to import UpperHouse data",
+          message: result.message,
           errors: result.errors
         });
       }
