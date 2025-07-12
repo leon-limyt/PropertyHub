@@ -128,61 +128,162 @@ export class PropertyDataScraper {
         extractedData.title = this.cleanHtmlText(titleMatch[1]);
       }
       
-      // Extract basic property information from content
+      // Enhanced property data extraction
       const lines = content.split('\n');
+      const fullText = content.toLowerCase();
       
+      // Extract more comprehensive property information
       for (const line of lines) {
-        // Look for key-value patterns
-        if (line.includes('District') || line.includes('DISTRICT')) {
-          const districtMatch = line.match(/District\s*:?\s*([^\n,|]+)/i) || 
-                              line.match(/D(\d+)/i);
+        const cleanLine = this.cleanHtmlText(line);
+        
+        // District extraction
+        if (cleanLine.includes('district') || cleanLine.includes('D')) {
+          const districtMatch = cleanLine.match(/district\s*:?\s*([^\n,|]+)/i) || 
+                              cleanLine.match(/D(\d+)/i) ||
+                              cleanLine.match(/district\s+(\d+)/i);
           if (districtMatch) {
-            extractedData.district = this.cleanHtmlText(districtMatch[1]);
+            extractedData.district = `District ${districtMatch[1]}`;
           }
         }
         
-        if (line.includes('Developer') || line.includes('DEVELOPER')) {
-          const developerMatch = line.match(/Developer\s*:?\s*([^\n,|]+)/i);
+        // Developer extraction
+        if (cleanLine.includes('developer') || cleanLine.includes('developed by')) {
+          const developerMatch = cleanLine.match(/(?:developer|developed by)\s*:?\s*([^\n,|]+)/i);
           if (developerMatch) {
             extractedData.developerName = this.cleanHtmlText(developerMatch[1]);
           }
         }
         
-        if (line.includes('Units') || line.includes('UNITS')) {
-          const unitsMatch = line.match(/Units?\s*:?\s*(\d+)/i);
+        // Units extraction
+        if (cleanLine.includes('units') || cleanLine.includes('total units')) {
+          const unitsMatch = cleanLine.match(/(?:total\s+)?units?\s*:?\s*(\d+)/i);
           if (unitsMatch) {
             extractedData.noOfUnits = unitsMatch[1];
           }
         }
         
-        if (line.includes('Tenure') || line.includes('TENURE')) {
-          const tenureMatch = line.match(/Tenure\s*:?\s*([^\n,|]+)/i);
+        // Blocks extraction
+        if (cleanLine.includes('blocks') || cleanLine.includes('towers')) {
+          const blocksMatch = cleanLine.match(/(?:blocks?|towers?)\s*:?\s*(\d+)/i);
+          if (blocksMatch) {
+            extractedData.noOfBlocks = blocksMatch[1];
+          }
+        }
+        
+        // Tenure extraction
+        if (cleanLine.includes('tenure') || cleanLine.includes('freehold') || cleanLine.includes('leasehold')) {
+          const tenureMatch = cleanLine.match(/tenure\s*:?\s*([^\n,|]+)/i) ||
+                             cleanLine.match(/(freehold|leasehold|99-year|999-year|103-year)/i);
           if (tenureMatch) {
             extractedData.tenure = this.cleanHtmlText(tenureMatch[1]);
           }
         }
         
-        if (line.includes('Address') || line.includes('Location')) {
-          const addressMatch = line.match(/(?:Address|Location)\s*:?\s*([^\n,|]+)/i);
+        // Address extraction
+        if (cleanLine.includes('address') || cleanLine.includes('location') || cleanLine.includes('singapore')) {
+          const addressMatch = cleanLine.match(/(?:address|location)\s*:?\s*([^\n,|]+)/i) ||
+                              cleanLine.match(/([^,]+,\s*singapore\s*\d{6})/i);
           if (addressMatch) {
             extractedData.address = this.cleanHtmlText(addressMatch[1]);
             extractedData.location = this.cleanHtmlText(addressMatch[1]);
           }
         }
         
-        if (line.includes('Property Type') || line.includes('TYPE')) {
-          const typeMatch = line.match(/(?:Property\s*)?Type\s*:?\s*([^\n,|]+)/i);
+        // Postal code extraction
+        if (cleanLine.includes('singapore') && cleanLine.match(/\d{6}/)) {
+          const postalMatch = cleanLine.match(/singapore\s*(\d{6})/i);
+          if (postalMatch) {
+            extractedData.postalCode = postalMatch[1];
+          }
+        }
+        
+        // Property type extraction
+        if (cleanLine.includes('property type') || cleanLine.includes('condominium') || cleanLine.includes('apartment')) {
+          const typeMatch = cleanLine.match(/(?:property\s*type)\s*:?\s*([^\n,|]+)/i) ||
+                           cleanLine.match(/(condominium|apartment|executive condominium|landed house|townhouse|penthouse)/i);
           if (typeMatch) {
             extractedData.propertyType = this.cleanHtmlText(typeMatch[1]);
           }
         }
+        
+        // Site area extraction
+        if (cleanLine.includes('site area') || cleanLine.includes('sqm')) {
+          const siteAreaMatch = cleanLine.match(/site\s*area\s*:?\s*([^\n,|]+)/i) ||
+                               cleanLine.match(/(\d+(?:,\d+)*)\s*sqm/i);
+          if (siteAreaMatch) {
+            extractedData.siteAreaSqm = siteAreaMatch[1].replace(/,/g, '');
+          }
+        }
+        
+        // Storey range extraction
+        if (cleanLine.includes('storey') || cleanLine.includes('floors')) {
+          const storeyMatch = cleanLine.match(/(?:storey|floors?)\s*:?\s*([^\n,|]+)/i) ||
+                             cleanLine.match(/(\d+)\s*(?:storey|floors?)/i);
+          if (storeyMatch) {
+            extractedData.storeyRange = this.cleanHtmlText(storeyMatch[1]);
+          }
+        }
+        
+        // Planning area extraction
+        if (cleanLine.includes('planning area') || cleanLine.includes('area')) {
+          const planningMatch = cleanLine.match(/planning\s*area\s*:?\s*([^\n,|]+)/i);
+          if (planningMatch) {
+            extractedData.planningArea = this.cleanHtmlText(planningMatch[1]);
+          }
+        }
+        
+        // Launch date extraction
+        if (cleanLine.includes('launch') && cleanLine.match(/\d{4}/)) {
+          const launchMatch = cleanLine.match(/launch\s*:?\s*([^\n,|]+)/i) ||
+                             cleanLine.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+          if (launchMatch) {
+            extractedData.launchDate = this.cleanHtmlText(launchMatch[1]);
+          }
+        }
+        
+        // Completion date extraction
+        if (cleanLine.includes('completion') || cleanLine.includes('top')) {
+          const completionMatch = cleanLine.match(/(?:completion|top)\s*:?\s*([^\n,|]+)/i) ||
+                                 cleanLine.match(/(\d{4})/);
+          if (completionMatch) {
+            extractedData.completionDate = this.cleanHtmlText(completionMatch[1]);
+          }
+        }
+        
+        // Plot ratio extraction
+        if (cleanLine.includes('plot ratio') || cleanLine.includes('gpr')) {
+          const plotMatch = cleanLine.match(/(?:plot\s*ratio|gpr)\s*:?\s*([^\n,|]+)/i);
+          if (plotMatch) {
+            extractedData.plotRatio = this.cleanHtmlText(plotMatch[1]);
+          }
+        }
+        
+        // MRT extraction
+        if (cleanLine.includes('mrt') || cleanLine.includes('station')) {
+          const mrtMatch = cleanLine.match(/([^,]+(?:mrt|station))/i);
+          if (mrtMatch) {
+            extractedData.mrtNearby = this.cleanHtmlText(mrtMatch[1]);
+          }
+        }
+        
+        // Schools extraction
+        if (cleanLine.includes('school') || cleanLine.includes('primary')) {
+          const schoolMatch = cleanLine.match(/([^,]+(?:school|primary))/i);
+          if (schoolMatch) {
+            extractedData.primarySchoolsWithin1km = this.cleanHtmlText(schoolMatch[1]);
+          }
+        }
       }
       
-      // Extract description - look for longer text blocks
+      // Extract description - look for longer text blocks and project descriptions
       const descriptionMatch = content.match(/description[^>]*>([^<]+)/i) ||
+                              content.match(/project\s*description[^>]*>([^<]+)/i) ||
+                              content.match(/about[^>]*>([^<]{100,})/i) ||
+                              content.match(/overview[^>]*>([^<]{100,})/i) ||
                               content.match(/\n\n([^#\n][^\n]{100,})/);
       if (descriptionMatch) {
         extractedData.description = this.cleanHtmlText(descriptionMatch[1]);
+        extractedData.projectDescription = this.cleanHtmlText(descriptionMatch[1]);
       }
       
       // Default values

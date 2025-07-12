@@ -165,6 +165,9 @@ Preferred communication style: Simple, everyday language.
   - Ensured single consolidated property entries to prevent duplication from multiple unit variants
   - Implemented proper duplicate import prevention with correct HTTP status codes (200 instead of 500)
   - Added specific error messaging for duplicate imports with proper frontend alert handling
+  - Enhanced URL scraping system with comprehensive data extraction for 15+ property fields
+  - Added HTML tag cleaning function to prevent HTML content in scraped data fields
+  - Removed unwanted Investment tab by reorganizing field categories in admin interface
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation
