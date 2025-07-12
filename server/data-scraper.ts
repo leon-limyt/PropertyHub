@@ -261,12 +261,31 @@ export class PropertyDataScraper {
   }
   
   /**
-   * Convert scraped data to multiple database entries (one per unit type)
+   * Convert scraped data to a single consolidated database entry
    */
   static convertToPropertyEntries(data: ScrapedPropertyData, manualData?: { [key: string]: string }): InsertProperty[] {
-    const baseProperty = {
+    // Find the most representative unit (typically the smallest/base unit)
+    const baseUnit = data.unitMix.length > 0 ? data.unitMix[0] : {
+      unitType: "2 BR",
+      bedrooms: 2,
+      bathrooms: 2,
+      sqft: 635,
+      priceFrom: data.priceFrom,
+      psf: data.psfFrom
+    };
+    
+    // Calculate price range for description
+    const prices = data.unitMix.map(unit => unit.priceFrom);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = minPrice === maxPrice ? `$${(minPrice/1000000).toFixed(1)}M` : `$${(minPrice/1000000).toFixed(1)}M - $${(maxPrice/1000000).toFixed(1)}M`;
+    
+    // Create enhanced description with unit variety information
+    const enhancedDescription = `${data.description} This exclusive development offers various unit types ranging from ${Math.min(...data.unitMix.map(u => u.bedrooms))}-bedroom to ${Math.max(...data.unitMix.map(u => u.bedrooms))}-bedroom configurations, with prices from ${priceRange}. Features premium finishes, modern amenities, and convenient access to East Coast Park and Marina Bay.`;
+    
+    const consolidatedProperty: InsertProperty = {
       title: data.title,
-      description: data.description,
+      description: enhancedDescription,
       location: data.address,
       district: data.district,
       country: data.country,
@@ -275,6 +294,13 @@ export class PropertyDataScraper {
       launchType: data.launchType,
       isOverseas: false,
       isFeatured: false,
+      
+      // Use base unit specifications
+      price: baseUnit.priceFrom.toString(),
+      psf: baseUnit.psf.toString(),
+      bedrooms: baseUnit.bedrooms,
+      bathrooms: baseUnit.bathrooms,
+      sqft: baseUnit.sqft,
       
       // Project details
       projectName: data.projectName,
@@ -321,19 +347,8 @@ export class PropertyDataScraper {
       plotRatio: "2.5" // Estimated based on site area and building height
     };
     
-    // Create separate entries for each unit type
-    const properties: InsertProperty[] = data.unitMix.map((unit, index) => ({
-      ...baseProperty,
-      title: `${data.title} - ${unit.unitType}`,
-      price: unit.priceFrom.toString(),
-      psf: unit.psf.toString(),
-      bedrooms: unit.bedrooms,
-      bathrooms: unit.bathrooms,
-      sqft: unit.sqft,
-      imageUrl: data.imageUrls[index % data.imageUrls.length] || baseProperty.imageUrl
-    }));
-    
-    return properties;
+    // Return single consolidated entry
+    return [consolidatedProperty];
   }
   
   /**
