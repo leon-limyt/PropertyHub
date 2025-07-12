@@ -151,3 +151,13 @@ Preferred communication style: Simple, everyday language.
   - Automatic data validation with missing field detection and recommendations
   - Imported 7 AmberHouse property variants with authentic pricing and specifications
   - Real estate data includes developer info, tenure, completion dates, and unit specifications
+- **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
+  - Removed 'bathrooms' field completely from database schema and UI
+  - Renamed 'bedrooms' to 'bedroomType' for better data representation
+  - Updated property cards to show "Beds" and "Unit Sizes" instead of "Bathrooms" and "Square Feet"
+  - Added "from" prefix to all property prices for consistency
+  - Removed Contact button from property cards as requested
+  - Updated search forms to remove bathroom filters
+  - Consolidated duplicate AmberHouse entries into single development entry
+  - Market Analysis now compares different developments within same district
+  - Updated data scraper to create consolidated property entries instead of multiple unit variants

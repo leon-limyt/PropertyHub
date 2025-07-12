@@ -237,21 +237,16 @@ export default function PropertyDetail() {
               <div className="text-sm text-gray-500">From ${parseFloat(property.psf).toFixed(0)} psf</div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <Bed className="h-5 w-5 text-teal-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold">{property.bedrooms}</div>
-                <div className="text-xs text-gray-600">Bed</div>
-              </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <Bath className="h-5 w-5 text-teal-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold">{property.bathrooms}</div>
-                <div className="text-xs text-gray-600">Bath</div>
+                <div className="text-lg font-semibold">{property.bedroomType}</div>
+                <div className="text-xs text-gray-600">Beds</div>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <Ruler className="h-5 w-5 text-teal-600 mx-auto mb-1" />
                 <div className="text-lg font-semibold">{property.sqft.toLocaleString()}</div>
-                <div className="text-xs text-gray-600">Sqft</div>
+                <div className="text-xs text-gray-600">Unit Sizes</div>
               </div>
             </div>
 
@@ -644,7 +639,7 @@ export default function PropertyDetail() {
                                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PSF</th>
                                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bed/Bath</th>
+                                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedroom Type</th>
                                 </tr>
                               </thead>
                               <tbody className="bg-white divide-y divide-gray-200">
@@ -667,7 +662,7 @@ export default function PropertyDetail() {
                                     {property.sqft.toLocaleString()} sqft
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-900">
-                                    {property.bedrooms}BR/{property.bathrooms}BA
+                                    {property.bedroomType}
                                   </td>
                                 </tr>
                                 {/* Nearby Properties */}
@@ -694,7 +689,7 @@ export default function PropertyDetail() {
                                       {nearbyProperty.sqft.toLocaleString()} sqft
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-900">
-                                      {nearbyProperty.bedrooms}BR/{nearbyProperty.bathrooms}BA
+                                      {nearbyProperty.bedroomType}
                                     </td>
                                   </tr>
                                 ))}

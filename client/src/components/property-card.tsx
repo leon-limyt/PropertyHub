@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bed, Bath, Ruler, Heart, Eye, Phone } from "lucide-react";
+import { Bed, Ruler, Heart, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -140,22 +140,18 @@ export default function PropertyCard({ property, userId = "guest", isFavorited =
         <p className="text-gray-600 mb-4">{property.location}</p>
         
         <div className="flex items-center justify-between mb-4">
-          <div className="text-2xl font-bold text-teal-600">{formatPrice(property.price)}</div>
+          <div className="text-2xl font-bold text-teal-600">From {formatPrice(property.price)}</div>
           <div className="text-sm text-gray-500">From ${parseFloat(property.psf).toFixed(0)} psf</div>
         </div>
         
         <div className="flex items-center space-x-4 mb-4 text-sm text-gray-600">
           <div className="flex items-center">
             <Bed className="h-4 w-4 mr-1" />
-            <span>{property.bedrooms} Bed{property.bedrooms > 1 ? 's' : ''}</span>
-          </div>
-          <div className="flex items-center">
-            <Bath className="h-4 w-4 mr-1" />
-            <span>{property.bathrooms} Bath{property.bathrooms > 1 ? 's' : ''}</span>
+            <span>{property.bedroomType}</span>
           </div>
           <div className="flex items-center">
             <Ruler className="h-4 w-4 mr-1" />
-            <span>{property.sqft.toLocaleString()} sqft</span>
+            <span>{property.sqft.toLocaleString()} Unit Sizes</span>
           </div>
         </div>
         
@@ -172,10 +168,6 @@ export default function PropertyCard({ property, userId = "guest", isFavorited =
               View Details
             </Button>
           </Link>
-          <Button variant="outline" className="btn-secondary">
-            <Phone className="h-4 w-4 mr-2" />
-            Contact
-          </Button>
         </div>
       </CardContent>
     </Card>

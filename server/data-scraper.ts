@@ -298,8 +298,7 @@ export class PropertyDataScraper {
       // Use base unit specifications
       price: baseUnit.priceFrom.toString(),
       psf: baseUnit.psf.toString(),
-      bedrooms: baseUnit.bedrooms,
-      bathrooms: baseUnit.bathrooms,
+      bedroomType: `${baseUnit.bedrooms} Bed${baseUnit.bedrooms > 1 ? 's' : ''}`,
       sqft: baseUnit.sqft,
       
       // Project details

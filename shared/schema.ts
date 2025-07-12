@@ -12,8 +12,7 @@ export const properties = pgTable("properties", {
   district: text("district").notNull(),
   country: text("country").notNull().default("Singapore"),
   propertyType: text("property_type").notNull(),
-  bedrooms: integer("bedrooms").notNull(),
-  bathrooms: integer("bathrooms").notNull(),
+  bedroomType: text("bedroom_type").notNull(),
   sqft: integer("sqft").notNull(),
   status: text("status").notNull().default("available"), // available, sold, preview
   launchType: text("launch_type").notNull(), // new-launch, resale, top-soon, preview
@@ -108,7 +107,6 @@ export const searchPropertiesSchema = z.object({
   location: z.string().optional(),
   propertyType: z.string().optional(),
   bedrooms: z.number().optional(),
-  bathrooms: z.number().optional(),
   minPrice: z.number().optional(),
   maxPrice: z.number().optional(),
   minSqft: z.number().optional(),

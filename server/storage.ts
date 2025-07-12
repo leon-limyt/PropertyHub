@@ -84,11 +84,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (params.bedrooms) {
-      conditions.push(eq(properties.bedrooms, params.bedrooms));
-    }
-
-    if (params.bathrooms) {
-      conditions.push(eq(properties.bathrooms, params.bathrooms));
+      // Convert bedroom number to bedroomType string for searching
+      const bedroomType = `${params.bedrooms} Bed${params.bedrooms > 1 ? 's' : ''}`;
+      conditions.push(eq(properties.bedroomType, bedroomType));
     }
 
     if (params.minPrice) {

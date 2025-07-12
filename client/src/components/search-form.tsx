@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Building, Bed, Bath, Ruler, DollarSign, Search } from "lucide-react";
+import { MapPin, Building, Bed, Ruler, DollarSign, Search } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface SearchFormProps {
@@ -17,7 +17,6 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
     location: "any",
     propertyType: "any",
     bedrooms: "any",
-    bathrooms: "any",
     priceRange: "any",
     sqftRange: "any",
   });
@@ -43,11 +42,6 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
     if (formData.bedrooms && formData.bedrooms !== "any") {
       transformedData.bedrooms = formData.bedrooms;
       searchParams.append("bedrooms", formData.bedrooms);
-    }
-    
-    if (formData.bathrooms && formData.bathrooms !== "any") {
-      transformedData.bathrooms = formData.bathrooms;
-      searchParams.append("bathrooms", formData.bathrooms);
     }
     
     // Transform price range into min/max price
@@ -147,7 +141,7 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="bedrooms" className="block text-sm font-medium text-gray-700 mb-2">
               Bedrooms
@@ -164,26 +158,6 @@ export default function SearchForm({ onSearch, className = "" }: SearchFormProps
                   <SelectItem value="2">2</SelectItem>
                   <SelectItem value="3">3</SelectItem>
                   <SelectItem value="4">4+</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700 mb-2">
-              Bathrooms
-            </Label>
-            <div className="relative">
-              <Bath className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-20 pointer-events-none" />
-              <Select value={formData.bathrooms} onValueChange={(value) => handleChange('bathrooms', value)}>
-                <SelectTrigger className="search-input">
-                  <SelectValue placeholder="Any" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any</SelectItem>
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3+</SelectItem>
                 </SelectContent>
               </Select>
             </div>
