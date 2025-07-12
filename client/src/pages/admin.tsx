@@ -8,8 +8,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest } from "@/lib/queryClient";
-import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign } from "lucide-react";
+import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign, Settings, Globe, Building, Users, Flag } from "lucide-react";
 
 interface ValidationResult {
   title: string;
@@ -42,26 +44,137 @@ interface ImportResult {
 }
 
 interface ManualEntryData {
-  latitude: string;
-  longitude: string;
-  agentName: string;
-  agentPhone: string;
-  agentEmail: string;
-  expectedROI: string;
-  additionalNotes: string;
+  [key: string]: string;
 }
+
+// Property field definitions with labels, types, and categories
+const PROPERTY_FIELDS = {
+  // Core Information
+  title: { label: "Property Title", type: "text", category: "Core", required: true },
+  description: { label: "Description", type: "textarea", category: "Core", required: true },
+  price: { label: "Price (SGD)", type: "number", category: "Core", required: true },
+  psf: { label: "Price per Sqft", type: "number", category: "Core", required: true },
+  location: { label: "Location", type: "text", category: "Core", required: true },
+  district: { label: "District", type: "text", category: "Core", required: true },
+  country: { label: "Country", type: "text", category: "Core", required: true },
+  propertyType: { label: "Property Type", type: "text", category: "Core", required: true },
+  bedrooms: { label: "Bedrooms", type: "number", category: "Core", required: true },
+  bathrooms: { label: "Bathrooms", type: "number", category: "Core", required: true },
+  sqft: { label: "Square Feet", type: "number", category: "Core", required: true },
+  status: { label: "Status", type: "text", category: "Core", required: true },
+  launchType: { label: "Launch Type", type: "text", category: "Core", required: true },
+  imageUrl: { label: "Image URL", type: "text", category: "Core", required: true },
+  
+  // Contact Information
+  agentName: { label: "Agent Name", type: "text", category: "Contact", required: true },
+  agentPhone: { label: "Agent Phone", type: "text", category: "Contact", required: true },
+  agentEmail: { label: "Agent Email", type: "email", category: "Contact", required: true },
+  expectedRoi: { label: "Expected ROI (%)", type: "number", category: "Investment", required: false },
+  
+  // Project Details
+  projectId: { label: "Project ID", type: "text", category: "Project", required: false },
+  projectName: { label: "Project Name", type: "text", category: "Project", required: false },
+  developerName: { label: "Developer Name", type: "text", category: "Project", required: false },
+  projectType: { label: "Project Type", type: "text", category: "Project", required: false },
+  tenure: { label: "Tenure", type: "text", category: "Project", required: false },
+  planningArea: { label: "Planning Area", type: "text", category: "Project", required: false },
+  address: { label: "Full Address", type: "text", category: "Project", required: false },
+  postalCode: { label: "Postal Code", type: "text", category: "Project", required: false },
+  launchDate: { label: "Launch Date", type: "date", category: "Project", required: false },
+  completionDate: { label: "Completion Date", type: "date", category: "Project", required: false },
+  noOfUnits: { label: "Number of Units", type: "number", category: "Project", required: false },
+  noOfBlocks: { label: "Number of Blocks", type: "number", category: "Project", required: false },
+  storeyRange: { label: "Storey Range", type: "text", category: "Project", required: false },
+  siteAreaSqm: { label: "Site Area (sqm)", type: "number", category: "Project", required: false },
+  plotRatio: { label: "Plot Ratio", type: "number", category: "Project", required: false },
+  projectDescription: { label: "Project Description", type: "textarea", category: "Project", required: false },
+  projectStatus: { label: "Project Status", type: "text", category: "Project", required: false },
+  
+  // Location Details
+  lat: { label: "Latitude", type: "number", category: "Location", required: false },
+  lng: { label: "Longitude", type: "number", category: "Location", required: false },
+  primarySchoolsWithin1km: { label: "Primary Schools (comma-separated)", type: "text", category: "Location", required: false },
+  mrtNearby: { label: "Nearby MRT (comma-separated)", type: "text", category: "Location", required: false },
+  
+  // Flags
+  isFeatured: { label: "Featured Property", type: "checkbox", category: "Flags", required: false },
+  isOverseas: { label: "Overseas Property", type: "checkbox", category: "Flags", required: false },
+  featured: { label: "Featured (Legacy)", type: "checkbox", category: "Flags", required: false },
+};
 
 export default function Admin() {
   const [importStatus, setImportStatus] = useState<ImportResult | null>(null);
-  const [manualData, setManualData] = useState<ManualEntryData>({
-    latitude: "",
-    longitude: "",
-    agentName: "",
-    agentPhone: "",
-    agentEmail: "",
-    expectedROI: "",
-    additionalNotes: "",
-  });
+  const [manualData, setManualData] = useState<ManualEntryData>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>("Core");
+
+  // Helper functions
+  const updateManualData = (field: string, value: string | boolean) => {
+    setManualData(prev => ({ ...prev, [field]: value.toString() }));
+  };
+
+  const getFieldsByCategory = (category: string) => {
+    return Object.entries(PROPERTY_FIELDS).filter(([_, field]) => field.category === category);
+  };
+
+  const getCategories = () => {
+    const categories = new Set(Object.values(PROPERTY_FIELDS).map(field => field.category));
+    return Array.from(categories);
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Core": return Settings;
+      case "Contact": return Phone;
+      case "Investment": return DollarSign;
+      case "Project": return Building;
+      case "Location": return MapPin;
+      case "Flags": return Flag;
+      default: return Info;
+    }
+  };
+
+  const renderField = (fieldKey: string, field: any) => {
+    const value = manualData[fieldKey] || "";
+    
+    switch (field.type) {
+      case "textarea":
+        return (
+          <Textarea
+            id={fieldKey}
+            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            value={value}
+            onChange={(e) => updateManualData(fieldKey, e.target.value)}
+            className="mt-1"
+            rows={3}
+          />
+        );
+      case "checkbox":
+        return (
+          <div className="flex items-center space-x-2 mt-1">
+            <Checkbox
+              id={fieldKey}
+              checked={value === "true"}
+              onCheckedChange={(checked) => updateManualData(fieldKey, checked)}
+            />
+            <Label htmlFor={fieldKey} className="text-sm font-normal">
+              {field.label}
+            </Label>
+          </div>
+        );
+      default:
+        return (
+          <Input
+            id={fieldKey}
+            type={field.type}
+            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            value={value}
+            onChange={(e) => updateManualData(fieldKey, e.target.value)}
+            className="mt-1"
+            step={field.type === "number" ? "0.01" : undefined}
+          />
+        );
+    }
+  };
 
   // Validate AmberHouse data
   const { data: validation, isLoading: validationLoading } = useQuery<ValidationResult>({
@@ -222,170 +335,73 @@ export default function Admin() {
                   </div>
                 )}
 
-                {/* Manual Entry Form for Missing Fields */}
-                {validation.validation.missingFields.length > 0 && (
-                  <div className="border rounded-lg p-6 bg-gray-50">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <Info className="h-5 w-5 mr-2 text-blue-500" />
-                      Manual Entry for Missing Fields
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Fill in the missing information below to enhance your property listings with complete data.
-                    </p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* GPS Coordinates */}
-                      <div className="space-y-4">
-                        <div className="flex items-center mb-3">
-                          <MapPin className="h-4 w-4 mr-2 text-green-600" />
-                          <h5 className="font-medium text-gray-900">GPS Coordinates</h5>
+                {/* Universal Property Data Editor */}
+                <div className="border rounded-lg p-6 bg-gray-50">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Settings className="h-5 w-5 mr-2 text-blue-500" />
+                    Property Data Editor
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Fill in or override property fields. This universal editor can handle any property data source and missing fields will be marked for manual entry.
+                  </p>
+                  
+                  <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+                    <TabsList className="grid w-full grid-cols-6">
+                      {getCategories().map((category) => {
+                        const Icon = getCategoryIcon(category);
+                        return (
+                          <TabsTrigger key={category} value={category} className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            {category}
+                          </TabsTrigger>
+                        );
+                      })}
+                    </TabsList>
+
+                    {getCategories().map((category) => (
+                      <TabsContent key={category} value={category} className="mt-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {getFieldsByCategory(category).map(([fieldKey, field]) => (
+                            <div key={fieldKey} className="space-y-2">
+                              <Label htmlFor={fieldKey} className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                {field.label}
+                                {field.required && <span className="text-red-500">*</span>}
+                              </Label>
+                              {renderField(fieldKey, field)}
+                              {field.type === "text" && fieldKey === "primarySchoolsWithin1km" && (
+                                <p className="text-xs text-gray-500">Enter school names separated by commas</p>
+                              )}
+                              {field.type === "text" && fieldKey === "mrtNearby" && (
+                                <p className="text-xs text-gray-500">Enter MRT stations separated by commas</p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
-                              Latitude
-                            </Label>
-                            <Input
-                              id="latitude"
-                              type="number"
-                              step="0.000001"
-                              placeholder="1.308103"
-                              value={manualData.latitude}
-                              onChange={(e) => setManualData(prev => ({ ...prev, latitude: e.target.value }))}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="longitude" className="text-sm font-medium text-gray-700">
-                              Longitude
-                            </Label>
-                            <Input
-                              id="longitude"
-                              type="number"
-                              step="0.000001"
-                              placeholder="103.826872"
-                              value={manualData.longitude}
-                              onChange={(e) => setManualData(prev => ({ ...prev, longitude: e.target.value }))}
-                              className="mt-1"
-                            />
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Use Google Maps to find exact coordinates for 30 Amber Gardens
+                      </TabsContent>
+                    ))}
+                  </Tabs>
+
+                  {/* Data Preview Summary */}
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h6 className="text-sm font-medium text-blue-900 mb-2">Data Preview</h6>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {Object.entries(manualData).slice(0, 8).map(([key, value]) => (
+                          value && (
+                            <div key={key} className="truncate">
+                              <span className="font-medium">{PROPERTY_FIELDS[key]?.label || key}:</span> {value}
+                            </div>
+                          )
+                        ))}
+                      </div>
+                      {Object.keys(manualData).length > 8 && (
+                        <p className="text-xs text-blue-600 mt-2">
+                          +{Object.keys(manualData).length - 8} more fields filled
                         </p>
-                      </div>
-
-                      {/* Expected ROI */}
-                      <div className="space-y-4">
-                        <div className="flex items-center mb-3">
-                          <DollarSign className="h-4 w-4 mr-2 text-green-600" />
-                          <h5 className="font-medium text-gray-900">Investment Information</h5>
-                        </div>
-                        <div>
-                          <Label htmlFor="expectedROI" className="text-sm font-medium text-gray-700">
-                            Expected ROI (%)
-                          </Label>
-                          <Input
-                            id="expectedROI"
-                            type="number"
-                            step="0.1"
-                            placeholder="4.5"
-                            value={manualData.expectedROI}
-                            onChange={(e) => setManualData(prev => ({ ...prev, expectedROI: e.target.value }))}
-                            className="mt-1"
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Expected annual rental yield percentage
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Agent Contact Information */}
-                      <div className="space-y-4 md:col-span-2">
-                        <div className="flex items-center mb-3">
-                          <Phone className="h-4 w-4 mr-2 text-blue-600" />
-                          <h5 className="font-medium text-gray-900">Agent Contact Information</h5>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <Label htmlFor="agentName" className="text-sm font-medium text-gray-700">
-                              Agent Name
-                            </Label>
-                            <Input
-                              id="agentName"
-                              type="text"
-                              placeholder="John Smith"
-                              value={manualData.agentName}
-                              onChange={(e) => setManualData(prev => ({ ...prev, agentName: e.target.value }))}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="agentPhone" className="text-sm font-medium text-gray-700">
-                              Phone Number
-                            </Label>
-                            <Input
-                              id="agentPhone"
-                              type="tel"
-                              placeholder="+65 9123 4567"
-                              value={manualData.agentPhone}
-                              onChange={(e) => setManualData(prev => ({ ...prev, agentPhone: e.target.value }))}
-                              className="mt-1"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="agentEmail" className="text-sm font-medium text-gray-700">
-                              Email Address
-                            </Label>
-                            <Input
-                              id="agentEmail"
-                              type="email"
-                              placeholder="agent@company.com"
-                              value={manualData.agentEmail}
-                              onChange={(e) => setManualData(prev => ({ ...prev, agentEmail: e.target.value }))}
-                              className="mt-1"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Additional Notes */}
-                      <div className="space-y-4 md:col-span-2">
-                        <div>
-                          <Label htmlFor="additionalNotes" className="text-sm font-medium text-gray-700">
-                            Additional Notes
-                          </Label>
-                          <Textarea
-                            id="additionalNotes"
-                            placeholder="Any additional information about the property, special features, or investment highlights..."
-                            value={manualData.additionalNotes}
-                            onChange={(e) => setManualData(prev => ({ ...prev, additionalNotes: e.target.value }))}
-                            className="mt-1"
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                      <h6 className="text-sm font-medium text-blue-900 mb-2">Preview Enhanced Data</h6>
-                      <div className="text-sm text-blue-800 space-y-1">
-                        {manualData.latitude && manualData.longitude && (
-                          <p>📍 GPS: {manualData.latitude}, {manualData.longitude}</p>
-                        )}
-                        {manualData.expectedROI && (
-                          <p>💰 Expected ROI: {manualData.expectedROI}% per annum</p>
-                        )}
-                        {manualData.agentName && (
-                          <p>👤 Agent: {manualData.agentName} {manualData.agentPhone && `(${manualData.agentPhone})`}</p>
-                        )}
-                        {manualData.additionalNotes && (
-                          <p>📝 Notes: {manualData.additionalNotes.substring(0, 100)}...</p>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Import Button */}
                 <div className="flex items-center justify-between pt-4">
