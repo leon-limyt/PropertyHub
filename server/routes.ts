@@ -239,6 +239,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Full scraped data endpoint
+  app.get("/api/admin/scraped-data/amberhouse", async (req, res) => {
+    try {
+      const scrapedData = PropertyDataScraper.extractAmberHouseData();
+      res.json(scrapedData);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to fetch scraped data",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

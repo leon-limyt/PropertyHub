@@ -214,53 +214,122 @@ export default function Admin() {
   });
 
   // Load scraped data into form fields
-  const loadScrapedData = () => {
+  const loadScrapedData = async () => {
     if (validation && !isDataLoaded) {
-      const scrapedData: ManualEntryData = {
-        title: "AmberHouse",
-        description: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast.",
-        price: "1800000",
-        psf: "1800",
-        location: "Amber Gardens, Singapore",
-        projectName: validation.projectName,
-        developerName: validation.developer,
-        address: validation.previewData.address,
-        district: validation.previewData.district,
-        country: "Singapore",
-        postalCode: "439964",
-        propertyType: "Condominium",
-        bedrooms: "1-5 Bedrooms",
-        sqft: "450-1650 sq ft",
-        tenure: validation.previewData.tenure,
-        status: "available",
-        launchType: "new-launch",
-        noOfUnits: validation.previewData.totalUnits.toString(),
-        noOfBlocks: "1",
-        storeyRange: "16 Storeys",
-        siteAreaSqm: "3801.4",
-        plotRatio: "2.5",
-        launchDate: "2024-01-01",
-        completionDate: validation.previewData.completionDate,
-        projectStatus: "Open for Booking",
-        primarySchoolsWithin1km: "Tanjong Katong Primary School, Haig Girls' School, Kong Hwa Primary School",
-        mrtNearby: "Tanjong Katong MRT, Marine Parade MRT, Katong Park MRT",
-        projectDescription: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast. Stay close to an array of dining, shopping and recreational amenities.",
-        imageUrl: "https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
-        // Default values for missing fields
-        agentName: "Property Sales Team",
-        agentPhone: "+65 6100 8108",
-        agentEmail: "sales@propertyreviewsg.com",
-        expectedRoi: "6.5",
-        lat: "1.302000",
-        lng: "103.906700",
-        isFeatured: "false",
-        isOverseas: "false",
-        featured: "false",
-        planningArea: "Marine Parade"
-      };
-      
-      setManualData(scrapedData);
-      setIsDataLoaded(true);
+      try {
+        // Fetch the full scraped data from server
+        const response = await fetch("/api/admin/scraped-data/amberhouse");
+        const fullScrapedData = await response.json();
+        
+        // Extract bedroom types from unit mix
+        const bedroomTypes = [...new Set(fullScrapedData.unitMix.map((unit: any) => `${unit.bedrooms} BR`))];
+        const bedroomTypesStr = bedroomTypes.length > 1 ? `${Math.min(...bedroomTypes.map((bt: string) => parseInt(bt)))}-${Math.max(...bedroomTypes.map((bt: string) => parseInt(bt)))} Bedrooms` : bedroomTypes[0];
+        
+        // Extract unit sizes from unit mix
+        const unitSizes = fullScrapedData.unitMix.map((unit: any) => unit.sqft);
+        const unitSizesStr = `${Math.min(...unitSizes)}-${Math.max(...unitSizes)} sq ft`;
+        
+        // Extract price range from unit mix
+        const prices = fullScrapedData.unitMix.map((unit: any) => unit.priceFrom);
+        const priceFrom = Math.min(...prices);
+        
+        // Extract PSF range from unit mix
+        const psfValues = fullScrapedData.unitMix.map((unit: any) => unit.psf);
+        const psfFrom = Math.min(...psfValues);
+        
+        const scrapedData: ManualEntryData = {
+          title: fullScrapedData.title,
+          description: fullScrapedData.description,
+          price: priceFrom.toString(),
+          psf: psfFrom.toString(),
+          location: fullScrapedData.address,
+          projectName: fullScrapedData.projectName,
+          developerName: fullScrapedData.developerName,
+          address: fullScrapedData.address,
+          district: fullScrapedData.district,
+          country: fullScrapedData.country,
+          postalCode: fullScrapedData.postalCode,
+          propertyType: fullScrapedData.propertyType,
+          bedrooms: bedroomTypesStr,
+          sqft: unitSizesStr,
+          tenure: fullScrapedData.tenure,
+          status: "available",
+          launchType: fullScrapedData.launchType,
+          noOfUnits: fullScrapedData.noOfUnits.toString(),
+          noOfBlocks: fullScrapedData.noOfBlocks.toString(),
+          storeyRange: fullScrapedData.storeyRange,
+          siteAreaSqm: fullScrapedData.siteAreaSqm,
+          plotRatio: "2.5",
+          launchDate: fullScrapedData.launchDate,
+          completionDate: fullScrapedData.completionDate,
+          projectStatus: fullScrapedData.projectStatus,
+          primarySchoolsWithin1km: fullScrapedData.nearbySchools.join(", "),
+          mrtNearby: fullScrapedData.nearbyMRT.join(", "),
+          projectDescription: fullScrapedData.description,
+          imageUrl: fullScrapedData.imageUrls[0] || "https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+          // Default values for missing fields
+          agentName: "Property Sales Team",
+          agentPhone: "+65 6100 8108",
+          agentEmail: "sales@propertyreviewsg.com",
+          expectedRoi: "6.5",
+          lat: "1.302000",
+          lng: "103.906700",
+          isFeatured: "false",
+          isOverseas: "false",
+          featured: "false",
+          planningArea: "Marine Parade"
+        };
+        
+        setManualData(scrapedData);
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error('Error loading scraped data:', error);
+        // Fallback to validation data if full scraped data fails
+        const fallbackData: ManualEntryData = {
+          title: "AmberHouse",
+          description: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast.",
+          price: "1920000",
+          psf: "2880",
+          location: "Amber Gardens, Singapore",
+          projectName: validation.projectName,
+          developerName: validation.developer,
+          address: validation.previewData.address,
+          district: validation.previewData.district,
+          country: "Singapore",
+          postalCode: "439964",
+          propertyType: "Condominium",
+          bedrooms: "2-4 Bedrooms",
+          sqft: "635-1744 sq ft",
+          tenure: validation.previewData.tenure,
+          status: "available",
+          launchType: "new-launch",
+          noOfUnits: validation.previewData.totalUnits.toString(),
+          noOfBlocks: "1",
+          storeyRange: "16 Storeys",
+          siteAreaSqm: "3801.4",
+          plotRatio: "2.5",
+          launchDate: "2025-06-28",
+          completionDate: validation.previewData.completionDate,
+          projectStatus: "Open for Booking",
+          primarySchoolsWithin1km: "Tanjong Katong Primary School",
+          mrtNearby: "Tanjong Katong MRT, Marine Parade MRT",
+          projectDescription: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast. Stay close to an array of dining, shopping and recreational amenities.",
+          imageUrl: "https://propertyreviewsg.com/wp-content/uploads/2025/06/Amberhouse-Project-Image-1.jpg",
+          agentName: "Property Sales Team",
+          agentPhone: "+65 6100 8108",
+          agentEmail: "sales@propertyreviewsg.com",
+          expectedRoi: "6.5",
+          lat: "1.302000",
+          lng: "103.906700",
+          isFeatured: "false",
+          isOverseas: "false",
+          featured: "false",
+          planningArea: "Marine Parade"
+        };
+        
+        setManualData(fallbackData);
+        setIsDataLoaded(true);
+      }
     }
   };
 
