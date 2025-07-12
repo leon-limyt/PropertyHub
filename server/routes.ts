@@ -6,6 +6,7 @@ import {
   insertFavoriteSchema, 
   searchPropertiesSchema 
 } from "@shared/schema";
+import { PropertyDataScraper } from "./data-scraper";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // API Configuration route
@@ -166,6 +167,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(analytics);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // Data Import routes (Admin functionality)
+  app.post("/api/admin/import/amberhouse", async (req, res) => {
+    try {
+      console.log('Starting AmberHouse data import...');
+      const result = await PropertyDataScraper.importAmberHouseData();
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: `Successfully imported ${result.imported} AmberHouse property variants`,
+          imported: result.imported,
+          missingFields: result.missingFields,
+          recommendations: result.recommendations
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Failed to import AmberHouse data",
+          errors: result.errors,
+          missingFields: result.missingFields,
+          recommendations: result.recommendations
+        });
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Server error during import",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Data validation endpoint
+  app.get("/api/admin/validate/amberhouse", async (req, res) => {
+    try {
+      const scrapedData = PropertyDataScraper.extractAmberHouseData();
+      const validation = PropertyDataScraper.validateData(scrapedData);
+      
+      res.json({
+        title: scrapedData.title,
+        projectName: scrapedData.projectName,
+        developer: scrapedData.developerName,
+        unitVariants: scrapedData.unitMix.length,
+        validation: {
+          isValid: validation.isValid,
+          missingFields: validation.missingFields,
+          recommendations: validation.recommendations
+        },
+        previewData: {
+          address: scrapedData.address,
+          district: scrapedData.district,
+          tenure: scrapedData.tenure,
+          totalUnits: scrapedData.noOfUnits,
+          priceRange: `$${(scrapedData.priceFrom / 1000000).toFixed(2)}M - $${(Math.max(...scrapedData.unitMix.map(u => u.priceFrom)) / 1000000).toFixed(2)}M`,
+          psfRange: `$${Math.min(...scrapedData.unitMix.map(u => u.psf))} - $${Math.max(...scrapedData.unitMix.map(u => u.psf))} PSF`,
+          completionDate: scrapedData.completionDate
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to validate data",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

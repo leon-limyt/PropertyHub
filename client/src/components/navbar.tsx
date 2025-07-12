@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Home, Building, TrendingUp, Menu, X } from "lucide-react";
+import { Home, Building, TrendingUp, Menu, X, Settings } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {
@@ -11,6 +11,7 @@ export default function Navbar() {
     { path: "/", label: "Home", icon: Home },
     { path: "/properties", label: "Properties", icon: Building },
     { path: "/analytics", label: "Analytics", icon: TrendingUp },
+    { path: "/admin", label: "Admin", icon: Settings },
   ];
 
   return (

@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import Properties from "@/pages/properties";
 import PropertyDetail from "@/pages/property-detail";
 import Analytics from "@/pages/analytics";
+import Admin from "@/pages/admin";
 import Navbar from "@/components/navbar";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
         <Route path="/properties" component={Properties} />
         <Route path="/property/:id" component={PropertyDetail} />
         <Route path="/analytics" component={Analytics} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </div>
