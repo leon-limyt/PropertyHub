@@ -5,8 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
-import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight } from "lucide-react";
+import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign } from "lucide-react";
 
 interface ValidationResult {
   title: string;
@@ -38,8 +41,27 @@ interface ImportResult {
   errors?: string[];
 }
 
+interface ManualEntryData {
+  latitude: string;
+  longitude: string;
+  agentName: string;
+  agentPhone: string;
+  agentEmail: string;
+  expectedROI: string;
+  additionalNotes: string;
+}
+
 export default function Admin() {
   const [importStatus, setImportStatus] = useState<ImportResult | null>(null);
+  const [manualData, setManualData] = useState<ManualEntryData>({
+    latitude: "",
+    longitude: "",
+    agentName: "",
+    agentPhone: "",
+    agentEmail: "",
+    expectedROI: "",
+    additionalNotes: "",
+  });
 
   // Validate AmberHouse data
   const { data: validation, isLoading: validationLoading } = useQuery<ValidationResult>({
@@ -53,7 +75,9 @@ export default function Admin() {
   // Import AmberHouse data
   const importMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/import/amberhouse");
+      const response = await apiRequest("POST", "/api/admin/import/amberhouse", {
+        manualData: manualData,
+      });
       return await response.json();
     },
     onSuccess: (data) => {
@@ -194,6 +218,171 @@ export default function Admin() {
                           <p className="text-sm text-gray-700">{rec}</p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual Entry Form for Missing Fields */}
+                {validation.validation.missingFields.length > 0 && (
+                  <div className="border rounded-lg p-6 bg-gray-50">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <Info className="h-5 w-5 mr-2 text-blue-500" />
+                      Manual Entry for Missing Fields
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Fill in the missing information below to enhance your property listings with complete data.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* GPS Coordinates */}
+                      <div className="space-y-4">
+                        <div className="flex items-center mb-3">
+                          <MapPin className="h-4 w-4 mr-2 text-green-600" />
+                          <h5 className="font-medium text-gray-900">GPS Coordinates</h5>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
+                              Latitude
+                            </Label>
+                            <Input
+                              id="latitude"
+                              type="number"
+                              step="0.000001"
+                              placeholder="1.308103"
+                              value={manualData.latitude}
+                              onChange={(e) => setManualData(prev => ({ ...prev, latitude: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="longitude" className="text-sm font-medium text-gray-700">
+                              Longitude
+                            </Label>
+                            <Input
+                              id="longitude"
+                              type="number"
+                              step="0.000001"
+                              placeholder="103.826872"
+                              value={manualData.longitude}
+                              onChange={(e) => setManualData(prev => ({ ...prev, longitude: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Use Google Maps to find exact coordinates for 30 Amber Gardens
+                        </p>
+                      </div>
+
+                      {/* Expected ROI */}
+                      <div className="space-y-4">
+                        <div className="flex items-center mb-3">
+                          <DollarSign className="h-4 w-4 mr-2 text-green-600" />
+                          <h5 className="font-medium text-gray-900">Investment Information</h5>
+                        </div>
+                        <div>
+                          <Label htmlFor="expectedROI" className="text-sm font-medium text-gray-700">
+                            Expected ROI (%)
+                          </Label>
+                          <Input
+                            id="expectedROI"
+                            type="number"
+                            step="0.1"
+                            placeholder="4.5"
+                            value={manualData.expectedROI}
+                            onChange={(e) => setManualData(prev => ({ ...prev, expectedROI: e.target.value }))}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Expected annual rental yield percentage
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Agent Contact Information */}
+                      <div className="space-y-4 md:col-span-2">
+                        <div className="flex items-center mb-3">
+                          <Phone className="h-4 w-4 mr-2 text-blue-600" />
+                          <h5 className="font-medium text-gray-900">Agent Contact Information</h5>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor="agentName" className="text-sm font-medium text-gray-700">
+                              Agent Name
+                            </Label>
+                            <Input
+                              id="agentName"
+                              type="text"
+                              placeholder="John Smith"
+                              value={manualData.agentName}
+                              onChange={(e) => setManualData(prev => ({ ...prev, agentName: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="agentPhone" className="text-sm font-medium text-gray-700">
+                              Phone Number
+                            </Label>
+                            <Input
+                              id="agentPhone"
+                              type="tel"
+                              placeholder="+65 9123 4567"
+                              value={manualData.agentPhone}
+                              onChange={(e) => setManualData(prev => ({ ...prev, agentPhone: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="agentEmail" className="text-sm font-medium text-gray-700">
+                              Email Address
+                            </Label>
+                            <Input
+                              id="agentEmail"
+                              type="email"
+                              placeholder="agent@company.com"
+                              value={manualData.agentEmail}
+                              onChange={(e) => setManualData(prev => ({ ...prev, agentEmail: e.target.value }))}
+                              className="mt-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Notes */}
+                      <div className="space-y-4 md:col-span-2">
+                        <div>
+                          <Label htmlFor="additionalNotes" className="text-sm font-medium text-gray-700">
+                            Additional Notes
+                          </Label>
+                          <Textarea
+                            id="additionalNotes"
+                            placeholder="Any additional information about the property, special features, or investment highlights..."
+                            value={manualData.additionalNotes}
+                            onChange={(e) => setManualData(prev => ({ ...prev, additionalNotes: e.target.value }))}
+                            className="mt-1"
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <h6 className="text-sm font-medium text-blue-900 mb-2">Preview Enhanced Data</h6>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        {manualData.latitude && manualData.longitude && (
+                          <p>📍 GPS: {manualData.latitude}, {manualData.longitude}</p>
+                        )}
+                        {manualData.expectedROI && (
+                          <p>💰 Expected ROI: {manualData.expectedROI}% per annum</p>
+                        )}
+                        {manualData.agentName && (
+                          <p>👤 Agent: {manualData.agentName} {manualData.agentPhone && `(${manualData.agentPhone})`}</p>
+                        )}
+                        {manualData.additionalNotes && (
+                          <p>📝 Notes: {manualData.additionalNotes.substring(0, 100)}...</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

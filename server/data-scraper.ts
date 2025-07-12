@@ -263,7 +263,15 @@ export class PropertyDataScraper {
   /**
    * Convert scraped data to multiple database entries (one per unit type)
    */
-  static convertToPropertyEntries(data: ScrapedPropertyData): InsertProperty[] {
+  static convertToPropertyEntries(data: ScrapedPropertyData, manualData?: {
+    latitude: string;
+    longitude: string;
+    agentName: string;
+    agentPhone: string;
+    agentEmail: string;
+    expectedROI: string;
+    additionalNotes: string;
+  }): InsertProperty[] {
     const baseProperty = {
       title: data.title,
       description: data.description,
@@ -303,19 +311,21 @@ export class PropertyDataScraper {
       // Images
       imageUrl: data.imageUrls[0] || "https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
       
-      // Missing fields that need manual input
-      agentName: "Property Sales Team",
-      agentPhone: "+65 6100 8108",
-      agentEmail: "sales@propertyreviewsg.com",
-      expectedRoi: "6.5",
+      // Missing fields that need manual input (use manual data if provided)
+      agentName: manualData?.agentName || "Property Sales Team",
+      agentPhone: manualData?.agentPhone || "+65 6100 8108",
+      agentEmail: manualData?.agentEmail || "sales@propertyreviewsg.com",
+      expectedRoi: manualData?.expectedROI || "6.5",
       featured: false,
       
-      // GPS coordinates (approximate for Marine Parade area)
-      lat: "1.302000",
-      lng: "103.906700",
+      // GPS coordinates (use manual data if provided, otherwise approximate)
+      lat: manualData?.latitude || "1.302000",
+      lng: manualData?.longitude || "103.906700",
       
-      // Project description
-      projectDescription: data.description,
+      // Project description (enhanced with manual notes if provided)
+      projectDescription: manualData?.additionalNotes 
+        ? `${data.description}\n\nAdditional Information: ${manualData.additionalNotes}`
+        : data.description,
       
       // Additional calculated fields
       plotRatio: "2.5" // Estimated based on site area and building height
@@ -339,7 +349,15 @@ export class PropertyDataScraper {
   /**
    * Import scraped data into database
    */
-  static async importAmberHouseData(): Promise<{
+  static async importAmberHouseData(manualData?: {
+    latitude: string;
+    longitude: string;
+    agentName: string;
+    agentPhone: string;
+    agentEmail: string;
+    expectedROI: string;
+    additionalNotes: string;
+  }): Promise<{
     success: boolean;
     imported: number;
     errors: string[];
@@ -356,7 +374,7 @@ export class PropertyDataScraper {
       const validation = this.validateData(scrapedData);
       
       // Convert to database entries
-      const propertyEntries = this.convertToPropertyEntries(scrapedData);
+      const propertyEntries = this.convertToPropertyEntries(scrapedData, manualData);
       
       // Check for existing entries first to avoid duplicates
       const existingProperties = await db.select().from(properties).where(

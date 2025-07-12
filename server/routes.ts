@@ -174,7 +174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/import/amberhouse", async (req, res) => {
     try {
       console.log('Starting AmberHouse data import...');
-      const result = await PropertyDataScraper.importAmberHouseData();
+      const { manualData } = req.body;
+      const result = await PropertyDataScraper.importAmberHouseData(manualData);
       
       if (result.success) {
         res.json({
