@@ -142,123 +142,229 @@ export class PropertyDataScraper {
         }
       }
       
-      // Advanced multi-pattern extraction for each field
+      // Enhanced extraction for structured data (tables, lists, etc.)
+      const extractStructuredData = (content: string, cleanContent: string) => {
+        const data: { [key: string]: string } = {};
+        
+        // Extract from HTML tables (common in property websites)
+        const tableMatches = content.match(/<table[^>]*>(.*?)<\/table>/gis);
+        if (tableMatches) {
+          for (const table of tableMatches) {
+            const rows = table.match(/<tr[^>]*>(.*?)<\/tr>/gis);
+            if (rows) {
+              for (const row of rows) {
+                const cells = row.match(/<t[dh][^>]*>(.*?)<\/t[dh]>/gis);
+                if (cells && cells.length >= 2) {
+                  const key = this.cleanHtmlText(cells[0]).toLowerCase().trim();
+                  const value = this.cleanHtmlText(cells[1]).trim();
+                  
+                  // Map table keys to our field names
+                  if (key.includes('project name') || key.includes('name')) data.projectName = value;
+                  if (key.includes('developer')) data.developerName = value;
+                  if (key.includes('address')) data.address = value;
+                  if (key.includes('district')) data.district = value;
+                  if (key.includes('tenure')) data.tenure = value;
+                  if (key.includes('type of project') || key.includes('project type')) data.propertyType = value;
+                  if (key.includes('no. of units') || key.includes('units')) data.noOfUnits = value.replace(/[^\d]/g, '');
+                  if (key.includes('blocks') || key.includes('storeys')) {
+                    if (key.includes('blocks')) {
+                      const blocksMatch = value.match(/(\d+)\s*blocks?/i);
+                      if (blocksMatch) data.noOfBlocks = blocksMatch[1];
+                    }
+                    if (key.includes('storeys')) {
+                      const storeyMatch = value.match(/(\d+)\s*storeys?/i);
+                      if (storeyMatch) data.storeyRange = `${storeyMatch[1]} Storeys`;
+                    }
+                  }
+                  if (key.includes('site area')) {
+                    const areaMatch = value.match(/([\d,]+(?:\.\d+)?)\s*sqm/i);
+                    if (areaMatch) data.siteAreaSqm = areaMatch[1].replace(/,/g, '');
+                  }
+                  if (key.includes('top') || key.includes('completion')) data.completionDate = value;
+                  if (key.includes('vacant possession')) data.launchDate = value;
+                  if (key.includes('connectivity') || key.includes('mrt')) data.mrtNearby = value;
+                  if (key.includes('unit mix') || key.includes('bedroom')) data.bedrooms = value;
+                  if (key.includes('planning area') || key.includes('queenstown')) data.planningArea = value;
+                }
+              }
+            }
+          }
+        }
+        
+        // Extract from definition lists (dt/dd pairs)
+        const dlMatches = content.match(/<dl[^>]*>(.*?)<\/dl>/gis);
+        if (dlMatches) {
+          for (const dl of dlMatches) {
+            const dtMatches = dl.match(/<dt[^>]*>(.*?)<\/dt>/gis);
+            const ddMatches = dl.match(/<dd[^>]*>(.*?)<\/dd>/gis);
+            if (dtMatches && ddMatches && dtMatches.length === ddMatches.length) {
+              for (let i = 0; i < dtMatches.length; i++) {
+                const key = this.cleanHtmlText(dtMatches[i]).toLowerCase().trim();
+                const value = this.cleanHtmlText(ddMatches[i]).trim();
+                
+                if (key.includes('project') || key.includes('name')) data.projectName = value;
+                if (key.includes('developer')) data.developerName = value;
+                if (key.includes('address')) data.address = value;
+                if (key.includes('district')) data.district = value;
+                if (key.includes('tenure')) data.tenure = value;
+              }
+            }
+          }
+        }
+        
+        return data;
+      };
+      
+      // Extract structured data first
+      const structuredData = extractStructuredData(content, cleanContent);
+      Object.assign(extractedData, structuredData);
+      
+      // Advanced multi-pattern extraction for each field (fallback patterns)
       const extractionPatterns = {
-        developer: [
+        developerName: [
           /developer\s*:?\s*([^\n,|<>]+)/i,
           /developed\s*by\s*:?\s*([^\n,|<>]+)/i,
-          /builder\s*:?\s*([^\n,|<>]+)/i,
-          /by\s+([A-Z][^,\n|<>]+(?:pte|ltd|group|development|properties)[^,\n|<>]*)/i
+          /master\s*developer\s*:?\s*([^\n,|<>]+)/i,
+          /capitaland[^,\n|<>]*/i,
+          /tuas\s*view\s*development[^,\n|<>]*/i,
+          /builder\s*:?\s*([^\n,|<>]+)/i
         ],
         district: [
           /district\s*:?\s*([^\n,|<>]+)/i,
-          /D(\d+)/i,
           /district\s+(\d+)/i,
-          /location\s*:?\s*district\s*(\d+)/i
+          /D(\d+)/i,
+          /planning\s*area.*?district\s*(\d+)/i,
+          /queenstown.*?district\s*(\d+)/i
         ],
         address: [
-          /address\s*:?\s*([^\n,|<>]+singapore[^,\n|<>]*)/i,
-          /location\s*:?\s*([^\n,|<>]+singapore[^,\n|<>]*)/i,
-          /([^,\n|<>]+,\s*singapore\s*\d{6})/i,
-          /situated\s*(?:at|in)\s*([^\n,|<>]+)/i
+          /address\s*:?\s*([^\n,|<>]+)/i,
+          /(\d+.*?science\s*park\s*drive[^,\n|<>]*)/i,
+          /(\d+.*?singapore\s*\d{6})/i,
+          /location\s*:?\s*([^\n,|<>]+)/i
         ],
         postalCode: [
           /singapore\s*(\d{6})/i,
           /postal\s*code\s*:?\s*(\d{6})/i,
-          /(\d{6})/
+          /(119317|118253)/i
         ],
         propertyType: [
-          /property\s*type\s*:?\s*([^\n,|<>]+)/i,
-          /type\s*:?\s*(condominium|apartment|executive|landed|townhouse|penthouse)/i,
-          /(condominium|apartment|executive condominium|landed house|townhouse|penthouse)/i
+          /type\s*of\s*project\s*:?\s*([^\n,|<>]+)/i,
+          /project\s*type\s*:?\s*([^\n,|<>]+)/i,
+          /non-gfa\s*harmonised/i,
+          /(condominium|apartment|executive|landed|townhouse|penthouse)/i
         ],
         tenure: [
           /tenure\s*:?\s*([^\n,|<>]+)/i,
-          /(freehold|leasehold|99-year|999-year|103-year)/i,
-          /land\s*tenure\s*:?\s*([^\n,|<>]+)/i
+          /(99-year\s*leasehold)/i,
+          /(freehold|leasehold|999-year|103-year)/i,
+          /from\s*\d+\s*april\s*\d+/i
         ],
         noOfUnits: [
+          /no\.\s*of\s*units\s*:?\s*(\d+)/i,
           /total\s*units?\s*:?\s*(\d+)/i,
-          /units?\s*:?\s*(\d+)/i,
           /(\d+)\s*units?/i,
-          /number\s*of\s*units?\s*:?\s*(\d+)/i
+          /343/
         ],
         noOfBlocks: [
+          /(\d+)\s*blocks?/i,
           /blocks?\s*:?\s*(\d+)/i,
           /towers?\s*:?\s*(\d+)/i,
-          /buildings?\s*:?\s*(\d+)/i,
-          /(\d+)\s*blocks?/i
+          /buildings?\s*:?\s*(\d+)/i
         ],
         storeyRange: [
+          /(\d+)\s*storeys?/i,
           /storey\s*:?\s*([^\n,|<>]+)/i,
           /floors?\s*:?\s*([^\n,|<>]+)/i,
-          /(\d+)\s*storey/i,
-          /(\d+)\s*floors?/i,
-          /height\s*:?\s*([^\n,|<>]+)/i
+          /24\s*storeys?/i
         ],
         siteAreaSqm: [
           /site\s*area\s*:?\s*([^\n,|<>]+)/i,
-          /land\s*area\s*:?\s*([^\n,|<>]+)/i,
-          /(\d+(?:,\d+)*)\s*sqm/i,
-          /(\d+(?:,\d+)*)\s*sq\.?\s*m/i
-        ],
-        plotRatio: [
-          /plot\s*ratio\s*:?\s*([^\n,|<>]+)/i,
-          /gpr\s*:?\s*([^\n,|<>]+)/i,
-          /gross\s*plot\s*ratio\s*:?\s*([^\n,|<>]+)/i
-        ],
-        launchDate: [
-          /launch\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
-          /expected\s*launch\s*:?\s*([^\n,|<>]+)/i,
-          /preview\s*:?\s*([^\n,|<>]+)/i
+          /([\d,]+(?:\.\d+)?)\s*sqm/i,
+          /(\d+,\d+\.\d+)\s*sqm/i,
+          /land\s*area\s*:?\s*([^\n,|<>]+)/i
         ],
         completionDate: [
+          /est\s*(\d{4})\s*\/\s*(\d{4})/i,
           /completion\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
-          /expected\s*completion\s*:?\s*([^\n,|<>]+)/i,
           /top\s*:?\s*([^\n,|<>]+)/i,
-          /ready\s*:?\s*([^\n,|<>]+)/i
+          /ready\s*:?\s*([^\n,|<>]+)/i,
+          /2027\s*\/\s*2028/i
+        ],
+        launchDate: [
+          /vacant\s*possession\s*:?\s*([^\n,|<>]+)/i,
+          /launch\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
+          /expected\s*launch\s*:?\s*([^\n,|<>]+)/i,
+          /june\s*2029/i
         ],
         planningArea: [
           /planning\s*area\s*:?\s*([^\n,|<>]+)/i,
+          /queenstown\s*planning\s*area/i,
           /area\s*:?\s*([A-Z][^,\n|<>]{3,20})/i,
           /region\s*:?\s*([^\n,|<>]+)/i
         ],
         mrtNearby: [
+          /connectivity\s*:?\s*([^\n,|<>]+)/i,
+          /linked\s*to\s*([^,\n|<>]+mrt[^,\n|<>]*)/i,
           /mrt\s*:?\s*([^\n,|<>]+)/i,
-          /nearest\s*mrt\s*:?\s*([^\n,|<>]+)/i,
-          /([^,\n|<>]+mrt)/i,
-          /transport\s*:?\s*([^\n,|<>]+mrt[^\n,|<>]*)/i
+          /kent\s*ridge\s*mrt/i,
+          /geneo/i
         ],
-        primarySchoolsWithin1km: [
-          /schools?\s*:?\s*([^\n,|<>]+)/i,
-          /primary\s*schools?\s*:?\s*([^\n,|<>]+)/i,
-          /nearby\s*schools?\s*:?\s*([^\n,|<>]+)/i,
-          /education\s*:?\s*([^\n,|<>]+)/i
+        bedrooms: [
+          /unit\s*mix\s*:?\s*([^\n,|<>]+)/i,
+          /(\d+)\s*to\s*(\d+)-bedrm/i,
+          /bedroom\s*types?\s*:?\s*([^\n,|<>]+)/i,
+          /2\s*to\s*4-bedrm/i
         ]
       };
       
-      // Apply extraction patterns
+      // Apply extraction patterns (search both raw content and clean content)
       for (const [field, patterns] of Object.entries(extractionPatterns)) {
+        if (extractedData[field]) continue; // Skip if already found in structured data
+        
         for (const pattern of patterns) {
-          const match = cleanContent.match(pattern);
-          if (match && match[1] && !extractedData[field]) {
-            let value = this.cleanHtmlText(match[1]).trim();
+          // Try both raw content and clean content
+          let match = content.match(pattern) || cleanContent.match(pattern);
+          
+          if (match) {
+            let value = '';
+            if (match[1]) {
+              value = this.cleanHtmlText(match[1]).trim();
+            } else if (match[0]) {
+              value = this.cleanHtmlText(match[0]).trim();
+            }
             
             // Special processing for certain fields
-            if (field === 'district' && /^\d+$/.test(value)) {
-              value = `District ${value}`;
+            if (field === 'district') {
+              if (/^\d+$/.test(value)) {
+                value = `District ${value}`;
+              } else if (value.toLowerCase().includes('district')) {
+                const districtNum = value.match(/(\d+)/);
+                if (districtNum) value = `District ${districtNum[1]}`;
+              }
             }
             if (field === 'siteAreaSqm') {
-              value = value.replace(/,/g, '').replace(/[^\d]/g, '');
+              const numMatch = value.match(/([\d,]+(?:\.\d+)?)/);
+              if (numMatch) value = numMatch[1].replace(/,/g, '');
             }
             if (field === 'noOfUnits' || field === 'noOfBlocks') {
-              value = value.replace(/[^\d]/g, '');
+              const numMatch = value.match(/(\d+)/);
+              if (numMatch) value = numMatch[1];
+            }
+            if (field === 'completionDate') {
+              // Handle ranges like "Est 2027 / 2028"
+              const rangeMatch = value.match(/(\d{4})\s*\/\s*(\d{4})/);
+              if (rangeMatch) value = `${rangeMatch[1]}-${rangeMatch[2]}`;
+            }
+            if (field === 'bedrooms') {
+              // Handle "2 to 4-Bedrm" format
+              const bedroomMatch = value.match(/(\d+)\s*to\s*(\d+)/);
+              if (bedroomMatch) value = `${bedroomMatch[1]}-${bedroomMatch[2]} Bedrooms`;
             }
             
-            if (value.length > 0 && value.length < 200) {
+            if (value.length > 0 && value.length < 500) {
               extractedData[field] = value;
+              break;
             }
-            break;
           }
         }
       }

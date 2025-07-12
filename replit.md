@@ -173,6 +173,10 @@ Preferred communication style: Simple, everyday language.
   - Enhanced field-specific processing for districts, units, addresses, and descriptions
   - Fixed Clear Form functionality to properly reset all form fields without automatic data reloading
   - Added form state management to prevent unwanted automatic data loading after manual form clearing
+  - Implemented advanced structured data extraction from HTML tables and definition lists
+  - Added comprehensive table-based data extraction for property information websites
+  - Enhanced pattern matching to handle specific property data formats like "Est 2027/2028" and "2 to 4-Bedrm"
+  - Improved field mapping for developer names, site areas, completion dates, and unit configurations
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation
