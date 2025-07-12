@@ -701,7 +701,7 @@ export default function Admin() {
                   {/* Import Button */}
                   <div className="flex items-center justify-between pt-4">
                     <div className="text-sm text-gray-600">
-                      {validation.unitVariants} property variants ready for import
+                      {validation.unitVariants} property ready for import
                     </div>
                     <Button
                       onClick={handleImport}

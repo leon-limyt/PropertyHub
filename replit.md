@@ -161,6 +161,8 @@ Preferred communication style: Simple, everyday language.
   - Corrected Plot Ratio from 2.5 to 3.5 for UpperHouse based on authentic URL data
   - Added proper project type classification (Residential) and planning area correction (Orchard)
   - Improved data accuracy verification process for all scraped properties
+  - Fixed unit variant display logic to show "1 property ready for import" instead of "5 property variants"
+  - Ensured single consolidated property entries to prevent duplication from multiple unit variants
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation

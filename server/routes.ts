@@ -245,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: scrapedData.title,
         projectName: scrapedData.projectName,
         developer: scrapedData.developerName,
-        unitVariants: scrapedData.unitMix.length,
+        unitVariants: 1, // Single consolidated property entry
         validation: {
           isValid: validation.isValid,
           missingFields: validation.missingFields,
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: scrapedData.title,
         projectName: scrapedData.projectName,
         developer: scrapedData.developerName,
-        unitVariants: scrapedData.unitMix.length,
+        unitVariants: 1, // Single consolidated property entry
         validation: {
           isValid: validation.isValid,
           missingFields: validation.missingFields,
