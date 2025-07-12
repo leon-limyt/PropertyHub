@@ -287,7 +287,15 @@ export class DatabaseStorage implements IStorage {
     const conditions = [eq(properties.district, district)];
     
     if (excludeId) {
+      // Get the current property to exclude its project name as well
+      const currentProperty = await this.getProperty(excludeId);
+      
       conditions.push(ne(properties.id, excludeId));
+      
+      // Also exclude properties from the same project/development
+      if (currentProperty?.projectName) {
+        conditions.push(ne(properties.projectName, currentProperty.projectName));
+      }
     }
     
     return await db.select().from(properties).where(and(...conditions));
