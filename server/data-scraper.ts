@@ -61,6 +61,106 @@ interface ScrapedPropertyData {
 
 export class PropertyDataScraper {
   /**
+   * Extract UpperHouse at Orchard Boulevard property data from scraped content
+   */
+  static extractUpperHouseData(): ScrapedPropertyData {
+    const data: ScrapedPropertyData = {
+      // Core property information
+      title: "UpperHouse at Orchard Boulevard",
+      description: "Nestled in Singapore's most coveted neighbourhood, next to the Orchard Road lifestyle and shopping district. A super prime District 10 location with 301 residences in a stunning 35-storey tower. Features elevated lifestyle with private facilities including the first-of-its-kind Wellness Villa & Business Lounge, and direct sheltered access to Orchard Boulevard MRT station.",
+      projectName: "UpperHouse at Orchard Boulevard",
+      developerName: "United Venture Development (UOL & Singland)",
+      
+      // Location details
+      address: "22 Orchard Boulevard, Singapore 249628",
+      district: "District 10",
+      country: "Singapore",
+      postalCode: "249628",
+      
+      // Property specifications
+      propertyType: "Condominium",
+      tenure: "99-year Leasehold",
+      noOfUnits: 301,
+      noOfBlocks: 1,
+      storeyRange: "35 Storeys",
+      siteAreaSqm: "7031.5",
+      
+      // Pricing information (estimated based on land cost)
+      priceFrom: 2800000, // Estimated for luxury District 10 development
+      psfFrom: 2100, // Estimated PSF for premium Orchard location
+      
+      // Unit mix details
+      unitMix: [
+        {
+          unitType: "1 Bedroom + Study",
+          bedrooms: 1,
+          bathrooms: 1,
+          sqft: 540,
+          priceFrom: 2800000,
+          psf: 2100
+        },
+        {
+          unitType: "2 Bedroom Premium",
+          bedrooms: 2,
+          bathrooms: 2,
+          sqft: 750,
+          priceFrom: 3500000,
+          psf: 2150
+        },
+        {
+          unitType: "2 Bedroom Premium + Study",
+          bedrooms: 2,
+          bathrooms: 2,
+          sqft: 880,
+          priceFrom: 4200000,
+          psf: 2200
+        },
+        {
+          unitType: "3 Bedroom Premium",
+          bedrooms: 3,
+          bathrooms: 3,
+          sqft: 1100,
+          priceFrom: 5500000,
+          psf: 2300
+        },
+        {
+          unitType: "4 Bedroom Suite",
+          bedrooms: 4,
+          bathrooms: 4,
+          sqft: 1500,
+          priceFrom: 8000000,
+          psf: 2400
+        }
+      ],
+      
+      // Development timeline
+      launchDate: "2025-06-01",
+      completionDate: "2029-12-31",
+      expectedTOP: "2029-12-31",
+      
+      // Amenities and location benefits
+      nearbySchools: ["Chatsworth International School", "ISS International School"],
+      nearbyMRT: ["Orchard Boulevard MRT", "Orchard MRT", "Somerset MRT"],
+      nearbyAmenities: ["Orchard Road Shopping District", "Singapore Botanic Gardens", "ION Orchard", "Takashimaya Shopping Centre"],
+      
+      // Additional info
+      projectStatus: "Preview",
+      launchType: "new-launch",
+      
+      // Missing fields that need to be populated
+      missingFields: ["specific_pricing", "detailed_floor_plans", "sales_gallery_info"],
+      
+      // Images
+      imageUrls: [
+        "https://propertyreviewsg.com/wp-content/uploads/2025/05/Upperhouse-At-Orchard-Boulevard-Logo.png",
+        "https://propertyreviewsg.com/wp-content/uploads/2025/05/Upperhouse-Project-and-Showflat-Location.jpg"
+      ]
+    };
+    
+    return data;
+  }
+  
+  /**
    * Extract AmberHouse property data from scraped content
    */
   static extractAmberHouseData(): ScrapedPropertyData {
@@ -356,6 +456,71 @@ export class PropertyDataScraper {
     
     // Return single consolidated entry
     return [consolidatedProperty];
+  }
+  
+  /**
+   * Import UpperHouse data into database
+   */
+  static async importUpperHouseData(manualData?: { [key: string]: string }, forceReimport?: boolean): Promise<{
+    success: boolean;
+    message: string;
+    imported?: number;
+    errors?: string[];
+  }> {
+    try {
+      // Check if UpperHouse already exists
+      const existingProperties = await storage.searchProperties({
+        query: "UpperHouse at Orchard Boulevard"
+      });
+      
+      if (existingProperties.length > 0 && !forceReimport) {
+        return {
+          success: false,
+          message: "UpperHouse at Orchard Boulevard already exists in database. Use force reimport to overwrite."
+        };
+      }
+      
+      // Extract scraped data
+      const scrapedData = this.extractUpperHouseData();
+      
+      // Convert to property entries
+      const propertyEntries = this.convertToPropertyEntries(scrapedData, manualData);
+      
+      // Delete existing entries if force reimport
+      if (forceReimport && existingProperties.length > 0) {
+        for (const existing of existingProperties) {
+          await storage.deleteProperty(existing.id);
+        }
+      }
+      
+      // Import new entries
+      let imported = 0;
+      const errors: string[] = [];
+      
+      for (const entry of propertyEntries) {
+        try {
+          await storage.createProperty(entry);
+          imported++;
+        } catch (error) {
+          errors.push(`Failed to import ${entry.title}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      
+      return {
+        success: imported > 0,
+        message: imported > 0 
+          ? `Successfully imported ${imported} UpperHouse property entries`
+          : "No properties were imported",
+        imported,
+        errors: errors.length > 0 ? errors : undefined
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to import UpperHouse data: ${error instanceof Error ? error.message : String(error)}`,
+        errors: [String(error)]
+      };
+    }
   }
   
   /**

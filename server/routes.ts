@@ -171,6 +171,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Data Import routes (Admin functionality)
+  app.post("/api/admin/import/upperhouse", async (req, res) => {
+    try {
+      console.log('Starting UpperHouse data import...');
+      const { manualData } = req.body;
+      const result = await PropertyDataScraper.importUpperHouseData(manualData);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: `Successfully imported ${result.imported} UpperHouse property entries`,
+          imported: result.imported
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Failed to import UpperHouse data",
+          errors: result.errors
+        });
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Server error during import",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.post("/api/admin/import/amberhouse", async (req, res) => {
     try {
       console.log('Starting AmberHouse data import...');
@@ -204,7 +233,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Data validation endpoint
+  // Data validation endpoints
+  app.get("/api/admin/validate/upperhouse", async (req, res) => {
+    try {
+      const scrapedData = PropertyDataScraper.extractUpperHouseData();
+      const validation = PropertyDataScraper.validateData(scrapedData);
+      
+      res.json({
+        title: scrapedData.title,
+        projectName: scrapedData.projectName,
+        developer: scrapedData.developerName,
+        unitVariants: scrapedData.unitMix.length,
+        validation: {
+          isValid: validation.isValid,
+          missingFields: validation.missingFields,
+          recommendations: validation.recommendations
+        },
+        previewData: {
+          address: scrapedData.address,
+          district: scrapedData.district,
+          tenure: scrapedData.tenure,
+          totalUnits: scrapedData.noOfUnits,
+          priceRange: `$${(scrapedData.priceFrom / 1000000).toFixed(2)}M - $${(Math.max(...scrapedData.unitMix.map(u => u.priceFrom)) / 1000000).toFixed(2)}M`,
+          psfRange: `$${Math.min(...scrapedData.unitMix.map(u => u.psf))} - $${Math.max(...scrapedData.unitMix.map(u => u.psf))} PSF`,
+          completionDate: scrapedData.completionDate
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to validate data",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.get("/api/admin/validate/amberhouse", async (req, res) => {
     try {
       const scrapedData = PropertyDataScraper.extractAmberHouseData();
@@ -239,7 +302,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Full scraped data endpoint
+  // Full scraped data endpoints
+  app.get("/api/admin/scraped-data/upperhouse", async (req, res) => {
+    try {
+      const scrapedData = PropertyDataScraper.extractUpperHouseData();
+      res.json(scrapedData);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false,
+        message: "Failed to fetch scraped data",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.get("/api/admin/scraped-data/amberhouse", async (req, res) => {
     try {
       const scrapedData = PropertyDataScraper.extractAmberHouseData();

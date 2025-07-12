@@ -114,6 +114,7 @@ const PROPERTY_FIELDS = {
 };
 
 export default function Admin() {
+  const [selectedProperty, setSelectedProperty] = useState<string>("upperhouse");
   const [importStatus, setImportStatus] = useState<ImportResult | null>(null);
   const [manualData, setManualData] = useState<ManualEntryData>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("Core");
@@ -206,11 +207,11 @@ export default function Admin() {
 
 
 
-  // Validate AmberHouse data
+  // Validate property data dynamically
   const { data: validation, isLoading: validationLoading } = useQuery<ValidationResult>({
-    queryKey: ["/api/admin/validate/amberhouse"],
+    queryKey: ["/api/admin/validate", selectedProperty],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/admin/validate/amberhouse");
+      const response = await apiRequest("GET", `/api/admin/validate/${selectedProperty}`);
       return await response.json();
     },
   });
@@ -220,7 +221,7 @@ export default function Admin() {
     if (validation && !isDataLoaded) {
       try {
         // Fetch the full scraped data from server
-        const response = await fetch("/api/admin/scraped-data/amberhouse");
+        const response = await fetch(`/api/admin/scraped-data/${selectedProperty}`);
         const fullScrapedData = await response.json();
         
         // Extract bedroom types from unit mix
@@ -342,10 +343,17 @@ export default function Admin() {
     }
   }, [validation, isDataLoaded]);
 
-  // Import AmberHouse data
+  // Reset form when property source changes
+  useEffect(() => {
+    setIsDataLoaded(false);
+    setManualData({});
+    setImportStatus(null);
+  }, [selectedProperty]);
+
+  // Import property data dynamically
   const importMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/admin/import/amberhouse", {
+      const response = await apiRequest("POST", `/api/admin/import/${selectedProperty}`, {
         manualData: manualData,
       });
       return await response.json();
@@ -357,7 +365,7 @@ export default function Admin() {
       if (data.success) {
         toast({
           title: "✅ Import Successful",
-          description: `${data.imported} AmberHouse property variants are now available in your database.`,
+          description: `${data.imported} ${validation?.projectName || 'property'} entries are now available in your database.`,
           duration: 5000,
         });
       } else {
@@ -378,7 +386,7 @@ export default function Admin() {
       // Show error toast notification
       toast({
         title: "❌ Import Failed",
-        description: "There was an error importing the AmberHouse data. Please check the details below.",
+        description: `There was an error importing the ${validation?.projectName || 'property'} data. Please check the details below.`,
         variant: "destructive",
         duration: 5000,
       });
@@ -396,6 +404,33 @@ export default function Admin() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Data Import Administration</h1>
           <p className="text-gray-600">Manage property data imports and validate scraped information</p>
         </div>
+
+        {/* Property Source Selector */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Database className="h-5 w-5 mr-2" />
+              Property Source Selection
+            </CardTitle>
+            <CardDescription>
+              Choose the property data source you want to import
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Label htmlFor="property-source">Select Property Source:</Label>
+              <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Select a property source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upperhouse">UpperHouse at Orchard Boulevard</SelectItem>
+                  <SelectItem value="amberhouse">AmberHouse</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Property Data Editor */}
         <Card className="mb-8">
