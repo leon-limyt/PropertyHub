@@ -264,24 +264,31 @@ export class PropertyDataScraper {
    * Convert scraped data to a single consolidated database entry
    */
   static convertToPropertyEntries(data: ScrapedPropertyData, manualData?: { [key: string]: string }): InsertProperty[] {
-    // Find the most representative unit (typically the smallest/base unit)
-    const baseUnit = data.unitMix.length > 0 ? data.unitMix[0] : {
-      unitType: "2 BR",
-      bedrooms: 2,
-      bathrooms: 2,
-      sqft: 635,
-      priceFrom: data.priceFrom,
-      psf: data.psfFrom
-    };
+    // Calculate ranges for bedroom types and unit sizes
+    const bedrooms = data.unitMix.map(u => u.bedrooms);
+    const sqfts = data.unitMix.map(u => u.sqft);
+    const prices = data.unitMix.map(u => u.priceFrom);
     
-    // Calculate price range for description
-    const prices = data.unitMix.map(unit => unit.priceFrom);
+    const minBedrooms = Math.min(...bedrooms);
+    const maxBedrooms = Math.max(...bedrooms);
+    const minSqft = Math.min(...sqfts);
+    const maxSqft = Math.max(...sqfts);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
+    
+    // Create bedroom type range
+    const bedroomType = minBedrooms === maxBedrooms 
+      ? `${minBedrooms} Bedroom${minBedrooms > 1 ? 's' : ''}`
+      : `${minBedrooms}-${maxBedrooms} Bedrooms`;
+    
+    // Use smallest unit as base for price calculations  
+    const baseUnit = data.unitMix.find(u => u.sqft === minSqft) || data.unitMix[0];
+    
+    // Create price range for description
     const priceRange = minPrice === maxPrice ? `$${(minPrice/1000000).toFixed(1)}M` : `$${(minPrice/1000000).toFixed(1)}M - $${(maxPrice/1000000).toFixed(1)}M`;
     
     // Create enhanced description with unit variety information
-    const enhancedDescription = `${data.description} This exclusive development offers various unit types ranging from ${Math.min(...data.unitMix.map(u => u.bedrooms))}-bedroom to ${Math.max(...data.unitMix.map(u => u.bedrooms))}-bedroom configurations, with prices from ${priceRange}. Features premium finishes, modern amenities, and convenient access to East Coast Park and Marina Bay.`;
+    const enhancedDescription = `${data.description} This exclusive development offers various unit types ranging from ${minBedrooms}-bedroom to ${maxBedrooms}-bedroom configurations, with sizes from ${minSqft}-${maxSqft} sqft and prices from ${priceRange}. Features premium finishes, modern amenities, and convenient access to East Coast Park and Marina Bay.`;
     
     const consolidatedProperty: InsertProperty = {
       title: data.title,
@@ -295,11 +302,12 @@ export class PropertyDataScraper {
       isOverseas: false,
       isFeatured: false,
       
-      // Use base unit specifications
+      // Use ranges for bedroom types and unit sizes
       price: baseUnit.priceFrom.toString(),
       psf: baseUnit.psf.toString(),
-      bedroomType: `${baseUnit.bedrooms} Bed${baseUnit.bedrooms > 1 ? 's' : ''}`,
-      sqft: baseUnit.sqft,
+      bedroomType: bedroomType,
+      sqft: minSqft, // Store min sqft for calculations
+      sqftRange: minSqft === maxSqft ? `${minSqft} sq ft` : `${minSqft}-${maxSqft} sq ft`, // Display range
       
       // Project details
       projectName: data.projectName,

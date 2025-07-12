@@ -241,11 +241,11 @@ export default function PropertyDetail() {
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <Bed className="h-5 w-5 text-teal-600 mx-auto mb-1" />
                 <div className="text-lg font-semibold">{property.bedroomType}</div>
-                <div className="text-xs text-gray-600">Beds</div>
+                <div className="text-xs text-gray-600">Bedroom Types</div>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <Ruler className="h-5 w-5 text-teal-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold">{property.sqft.toLocaleString()}</div>
+                <div className="text-lg font-semibold">{property.sqftRange || `${property.sqft.toLocaleString()} sq ft`}</div>
                 <div className="text-xs text-gray-600">Unit Sizes</div>
               </div>
             </div>
@@ -659,7 +659,7 @@ export default function PropertyDetail() {
                                     ${parseFloat(property.psf).toFixed(0)}
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-900">
-                                    {property.sqft.toLocaleString()} sqft
+                                    {property.sqftRange || `${property.sqft.toLocaleString()} sqft`}
                                   </td>
                                   <td className="px-4 py-3 text-sm text-gray-900">
                                     {property.bedroomType}
@@ -686,7 +686,7 @@ export default function PropertyDetail() {
                                       </div>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-900">
-                                      {nearbyProperty.sqft.toLocaleString()} sqft
+                                      {nearbyProperty.sqftRange || `${nearbyProperty.sqft.toLocaleString()} sqft`}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-900">
                                       {nearbyProperty.bedroomType}

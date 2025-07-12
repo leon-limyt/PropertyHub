@@ -151,7 +151,7 @@ export default function PropertyCard({ property, userId = "guest", isFavorited =
           </div>
           <div className="flex items-center">
             <Ruler className="h-4 w-4 mr-1" />
-            <span>{property.sqft.toLocaleString()} Unit Sizes</span>
+            <span>{property.sqftRange || `${property.sqft.toLocaleString()} sq ft`}</span>
           </div>
         </div>
         

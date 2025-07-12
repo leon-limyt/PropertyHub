@@ -14,6 +14,7 @@ export const properties = pgTable("properties", {
   propertyType: text("property_type").notNull(),
   bedroomType: text("bedroom_type").notNull(),
   sqft: integer("sqft").notNull(),
+  sqftRange: text("sqft_range"), // For displaying unit size ranges like "635-1744 sq ft"
   status: text("status").notNull().default("available"), // available, sold, preview
   launchType: text("launch_type").notNull(), // new-launch, resale, top-soon, preview
   imageUrl: text("image_url").notNull(),
