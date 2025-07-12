@@ -85,51 +85,51 @@ export class PropertyDataScraper {
       storeyRange: "35 Storeys",
       siteAreaSqm: "7031.5",
       
-      // Pricing information (estimated based on land cost)
-      priceFrom: 2800000, // Estimated for luxury District 10 development
-      psfFrom: 2100, // Estimated PSF for premium Orchard location
+      // Pricing information (not available in source)
+      priceFrom: 0, // To be determined - pricing not yet released
+      psfFrom: 0, // To be determined - pricing not yet released
       
-      // Unit mix details
+      // Unit mix details (based on authentic data from URL)
       unitMix: [
         {
           unitType: "1 Bedroom + Study",
           bedrooms: 1,
           bathrooms: 1,
-          sqft: 540,
-          priceFrom: 2800000,
-          psf: 2100
+          sqft: 0, // Size not specified in source
+          priceFrom: 0, // Price not available yet
+          psf: 0 // PSF not available yet
         },
         {
           unitType: "2 Bedroom Premium",
           bedrooms: 2,
           bathrooms: 2,
-          sqft: 750,
-          priceFrom: 3500000,
-          psf: 2150
+          sqft: 0, // Size not specified in source
+          priceFrom: 0, // Price not available yet
+          psf: 0 // PSF not available yet
         },
         {
           unitType: "2 Bedroom Premium + Study",
           bedrooms: 2,
           bathrooms: 2,
-          sqft: 880,
-          priceFrom: 4200000,
-          psf: 2200
+          sqft: 0, // Size not specified in source
+          priceFrom: 0, // Price not available yet
+          psf: 0 // PSF not available yet
         },
         {
           unitType: "3 Bedroom Premium",
           bedrooms: 3,
           bathrooms: 3,
-          sqft: 1100,
-          priceFrom: 5500000,
-          psf: 2300
+          sqft: 0, // Size not specified in source
+          priceFrom: 0, // Price not available yet
+          psf: 0 // PSF not available yet
         },
         {
-          unitType: "4 Bedroom Suite",
+          unitType: "4 Bedroom Suite + Private Lift",
           bedrooms: 4,
           bathrooms: 4,
-          sqft: 1500,
-          priceFrom: 8000000,
-          psf: 2400
+          sqft: 0, // Size not specified in source
+          priceFrom: 0, // Price not available yet
+          psf: 0 // PSF not available yet
         }
       ],
       
@@ -148,7 +148,7 @@ export class PropertyDataScraper {
       launchType: "new-launch",
       
       // Missing fields that need to be populated
-      missingFields: ["specific_pricing", "detailed_floor_plans", "sales_gallery_info"],
+      missingFields: ["pricing_information", "unit_sizes", "psf_data", "detailed_floor_plans", "sales_gallery_info", "exact_coordinates"],
       
       // Images
       imageUrls: [

@@ -228,23 +228,23 @@ export default function Admin() {
         const bedroomTypes = [...new Set(fullScrapedData.unitMix.map((unit: any) => `${unit.bedrooms} BR`))];
         const bedroomTypesStr = bedroomTypes.length > 1 ? `${Math.min(...bedroomTypes.map((bt: string) => parseInt(bt)))}-${Math.max(...bedroomTypes.map((bt: string) => parseInt(bt)))} Bedrooms` : bedroomTypes[0];
         
-        // Extract unit sizes from unit mix
-        const unitSizes = fullScrapedData.unitMix.map((unit: any) => unit.sqft);
-        const unitSizesStr = `${Math.min(...unitSizes)}-${Math.max(...unitSizes)} sq ft`;
+        // Extract unit sizes from unit mix (handle missing size data)
+        const unitSizes = fullScrapedData.unitMix.map((unit: any) => unit.sqft).filter((size: number) => size > 0);
+        const unitSizesStr = unitSizes.length > 0 ? `${Math.min(...unitSizes)}-${Math.max(...unitSizes)} sq ft` : "To be determined";
         
-        // Extract price range from unit mix
-        const prices = fullScrapedData.unitMix.map((unit: any) => unit.priceFrom);
-        const priceFrom = Math.min(...prices);
+        // Extract price range from unit mix (handle missing pricing data)
+        const prices = fullScrapedData.unitMix.map((unit: any) => unit.priceFrom).filter((price: number) => price > 0);
+        const priceFrom = prices.length > 0 ? Math.min(...prices) : 0;
         
-        // Extract PSF range from unit mix
-        const psfValues = fullScrapedData.unitMix.map((unit: any) => unit.psf);
-        const psfFrom = Math.min(...psfValues);
+        // Extract PSF range from unit mix (handle missing PSF data)
+        const psfValues = fullScrapedData.unitMix.map((unit: any) => unit.psf).filter((psf: number) => psf > 0);
+        const psfFrom = psfValues.length > 0 ? Math.min(...psfValues) : 0;
         
         const scrapedData: ManualEntryData = {
           title: fullScrapedData.title,
           description: fullScrapedData.description,
-          price: priceFrom.toString(),
-          psf: psfFrom.toString(),
+          price: priceFrom > 0 ? priceFrom.toString() : "",
+          psf: psfFrom > 0 ? psfFrom.toString() : "",
           location: fullScrapedData.address,
           projectName: fullScrapedData.projectName,
           developerName: fullScrapedData.developerName,
