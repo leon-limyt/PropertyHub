@@ -80,9 +80,10 @@ export class PropertyDataScraper {
       const cleanContent = this.cleanHtmlText(pdfText);
       const lines = cleanContent.split('\n').filter(line => line.trim().length > 0);
       
-      // Extract title from multiple sources
+      // Extract title (Development Name from the first line typically)
       const titlePatterns = [
-        /^([A-Z][^,\n]+(?:development|project|residence|condos?|apartments?|towers?|estate|gardens?|villas?|heights?|court|place|view|park|green|square|plaza|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise|gardens?|park|green|square|plaza|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise)[^,\n]*)/im,
+        /^Development\s*Name\s*([^\n]+)/i,
+        /^([A-Z][^,\n]+(?:development|project|residence|condos?|apartments?|towers?|estate|gardens?|villas?|heights?|court|place|view|park|green|square|plaza|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise|peak|summit|pinnacle|apex|crown|heights?|towers?|suites?|residences?|plaza|square|gardens?|park|green|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise)[^,\n]*)/im,
         /project\s*name\s*:?\s*([^\n,|]+)/i,
         /property\s*name\s*:?\s*([^\n,|]+)/i,
         /development\s*name\s*:?\s*([^\n,|]+)/i
@@ -97,59 +98,75 @@ export class PropertyDataScraper {
         }
       }
       
-      // Advanced multi-pattern extraction for each field
+      // Enhanced PDF factsheet extraction patterns for structured data
       const extractionPatterns = {
         developerName: [
+          /Developer\s*([^\n\r]+)/i,
           /developer\s*:?\s*([^\n,|<>]+)/i,
           /developed\s*by\s*:?\s*([^\n,|<>]+)/i,
-          /master\s*developer\s*:?\s*([^\n,|<>]+)/i,
-          /builder\s*:?\s*([^\n,|<>]+)/i
+          /master\s*developer\s*:?\s*([^\n,|<>]+)/i
         ],
         district: [
-          /district\s*:?\s*([^\n,|<>]+)/i,
-          /district\s+(\d+)/i,
+          /District\s*(\d+)/i,
+          /district\s*:?\s*(\d+)/i,
           /D(\d+)/i,
           /planning\s*area.*?district\s*(\d+)/i
         ],
         address: [
+          /Address\s*([^\n\r]+)/i,
           /address\s*:?\s*([^\n,|<>]+)/i,
           /location\s*:?\s*([^\n,|<>]+)/i,
           /situated\s*(?:at|in)\s*([^\n,|<>]+)/i
         ],
         postalCode: [
+          /Singapore\s*(\d{6})/i,
           /singapore\s*(\d{6})/i,
           /postal\s*code\s*:?\s*(\d{6})/i
         ],
         propertyType: [
+          /(?:Proposed\s*)?([^,\n]*condominium[^,\n]*)/i,
           /type\s*of\s*project\s*:?\s*([^\n,|<>]+)/i,
           /project\s*type\s*:?\s*([^\n,|<>]+)/i,
           /(condominium|apartment|executive|landed|townhouse|penthouse)/i
         ],
         tenure: [
+          /Tenure\s*([^\n\r]+)/i,
           /tenure\s*:?\s*([^\n,|<>]+)/i,
+          /(\d+\s*years?\s*w\.e\.f\.?[^\n]*)/i,
           /(freehold|leasehold|99-year|999-year|103-year)/i
         ],
         noOfUnits: [
+          /No\.\s*of\s*Units\s*(\d+)/i,
           /no\.\s*of\s*units\s*:?\s*(\d+)/i,
           /total\s*units?\s*:?\s*(\d+)/i,
           /(\d+)\s*units?/i
         ],
         noOfBlocks: [
+          /No\.\s*of\s*Tower\s*(\d+)/i,
           /(\d+)\s*blocks?/i,
           /blocks?\s*:?\s*(\d+)/i,
           /towers?\s*:?\s*(\d+)/i
         ],
         storeyRange: [
+          /No\.\s*of\s*Storey\s*([^\n\r]+)/i,
           /(\d+)\s*storeys?/i,
           /storey\s*:?\s*([^\n,|<>]+)/i,
           /floors?\s*:?\s*([^\n,|<>]+)/i
         ],
         siteAreaSqm: [
+          /Site\s*Area\s*([^\n\r]+)/i,
           /site\s*area\s*:?\s*([^\n,|<>]+)/i,
           /([\d,]+(?:\.\d+)?)\s*sqm/i,
           /land\s*area\s*:?\s*([^\n,|<>]+)/i
         ],
+        plotRatio: [
+          /Plot\s*Ratio\s*([\d.]+)/i,
+          /plot\s*ratio\s*:?\s*([\d.]+)/i,
+          /G\.F\.A\.\s*ratio\s*:?\s*([\d.]+)/i
+        ],
         completionDate: [
+          /Expected\s*Date\s*of\s*Legal\s*Completion\s*([^\n\r]+)/i,
+          /Expected\s*Date\s*of\s*Vacant\s*Possession\s*([^\n\r]+)/i,
           /completion\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
           /top\s*:?\s*([^\n,|<>]+)/i,
           /ready\s*:?\s*([^\n,|<>]+)/i
@@ -183,9 +200,11 @@ export class PropertyDataScraper {
           /\$([0-9,]+)\s*psf/i
         ],
         description: [
+          /Description\s*([^\n\r]{50,})/i,
           /description\s*:?\s*([^\n]{50,200})/i,
           /about\s*the\s*project\s*:?\s*([^\n]{50,200})/i,
-          /project\s*description\s*:?\s*([^\n]{50,200})/i
+          /project\s*description\s*:?\s*([^\n]{50,200})/i,
+          /Proposed\s*([^,\n]*housing\s*development[^,\n]*)/i
         ]
       };
       
@@ -217,12 +236,45 @@ export class PropertyDataScraper {
               const numMatch = value.match(/([\d,]+)/);
               if (numMatch) value = numMatch[1].replace(/,/g, '');
             }
+            if (field === 'plotRatio') {
+              const numMatch = value.match(/([\d.]+)/);
+              if (numMatch) value = numMatch[1];
+            }
             
             if (value.length > 0 && value.length < 500) {
               extractedData[field] = value;
               break;
             }
           }
+        }
+      }
+      
+      // Extract unit sizes from bedroom table
+      const unitSizeMatch = pdfText.match(/Bedroom\s*Type.*?Size\s*\(sqft\).*?(\d+)\s*-\s*(\d+)/is);
+      if (unitSizeMatch) {
+        const minSize = unitSizeMatch[1];
+        const maxSize = unitSizeMatch[2];
+        extractedData.unitSizes = `${minSize} - ${maxSize} sqft`;
+      }
+      
+      // Extract unit mix summary from the bedroom table
+      const unitMixMatches = pdfText.match(/(1-Bedroom[^%]*%)/gi);
+      if (unitMixMatches && unitMixMatches.length > 0) {
+        const unitTypes = [];
+        const bedroomTableMatch = pdfText.match(/Bedroom\s*Type.*?Size.*?Units.*?Percentage(.*?)(?=\n\n|\n[A-Z])/s);
+        if (bedroomTableMatch) {
+          const tableContent = bedroomTableMatch[1];
+          const lines = tableContent.split('\n').filter(line => line.trim());
+          
+          for (const line of lines) {
+            const match = line.match(/(\d+)-Bedroom[^%]*(\d+\.\d+)%/);
+            if (match) {
+              unitTypes.push(`${match[1]}-Bedroom: ${match[2]}%`);
+            }
+          }
+        }
+        if (unitTypes.length > 0) {
+          extractedData.unitMix = unitTypes.join(', ');
         }
       }
       
