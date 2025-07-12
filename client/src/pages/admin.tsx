@@ -417,6 +417,11 @@ export default function Admin() {
         setManualData({});
         setIsDataLoaded(false);
         setScrapeUrl("");
+        
+        // Clear import status after showing success message
+        setTimeout(() => {
+          setImportStatus(null);
+        }, 3000);
       } else {
         toast({
           title: "⚠️ Import Completed with Warnings",
