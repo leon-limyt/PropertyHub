@@ -629,7 +629,7 @@ export default function PropertyDetail() {
                               {sameDistrictProperties.length}
                             </div>
                             <div className="text-sm text-gray-600">
-                              in same district
+                              comparable properties
                             </div>
                           </div>
                         </div>
