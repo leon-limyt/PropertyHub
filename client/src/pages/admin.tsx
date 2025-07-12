@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign, Settings, Globe, Building, Users, Flag } from "lucide-react";
 
@@ -55,14 +56,23 @@ const PROPERTY_FIELDS = {
   price: { label: "Price (SGD)", type: "number", category: "Core", required: true },
   psf: { label: "Price per Sqft", type: "number", category: "Core", required: true },
   location: { label: "Location", type: "text", category: "Core", required: true },
-  district: { label: "District", type: "text", category: "Core", required: true },
+  district: { label: "District", type: "select", category: "Core", required: true, options: [
+    "District 1", "District 2", "District 3", "District 4", "District 5", "District 6", "District 7", "District 8", "District 9", "District 10",
+    "District 11", "District 12", "District 13", "District 14", "District 15", "District 16", "District 17", "District 18", "District 19", "District 20",
+    "District 21", "District 22", "District 23", "District 24", "District 25", "District 26", "District 27", "District 28", "Sentosa"
+  ]},
   country: { label: "Country", type: "text", category: "Core", required: true },
-  propertyType: { label: "Property Type", type: "text", category: "Core", required: true },
-  bedrooms: { label: "Bedrooms", type: "number", category: "Core", required: true },
-  bathrooms: { label: "Bathrooms", type: "number", category: "Core", required: true },
-  sqft: { label: "Square Feet", type: "number", category: "Core", required: true },
-  status: { label: "Status", type: "text", category: "Core", required: true },
-  launchType: { label: "Launch Type", type: "text", category: "Core", required: true },
+  propertyType: { label: "Property Type", type: "select", category: "Core", required: true, options: [
+    "Condominium", "Apartment", "Executive Condominium", "Landed House", "Townhouse", "Penthouse", "HDB", "Commercial"
+  ]},
+  bedrooms: { label: "Bedroom Types", type: "text", category: "Core", required: true, placeholder: "e.g., 1-5 Bedrooms" },
+  sqft: { label: "Unit Sizes", type: "text", category: "Core", required: true, placeholder: "e.g., 450-1650 sq ft" },
+  status: { label: "Status", type: "select", category: "Core", required: true, options: [
+    "available", "sold-out", "launching-soon", "under-construction", "completed", "preview"
+  ]},
+  launchType: { label: "Launch Type", type: "select", category: "Core", required: true, options: [
+    "new-launch", "resale", "sub-sale", "pre-launch", "soft-launch"
+  ]},
   imageUrl: { label: "Image URL", type: "text", category: "Core", required: true },
   
   // Contact Information
@@ -142,7 +152,7 @@ export default function Admin() {
         return (
           <Textarea
             id={fieldKey}
-            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
             value={value}
             onChange={(e) => updateManualData(fieldKey, e.target.value)}
             className="mt-1"
@@ -162,12 +172,27 @@ export default function Admin() {
             </Label>
           </div>
         );
+      case "select":
+        return (
+          <Select value={value} onValueChange={(newValue) => updateManualData(fieldKey, newValue)}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder={`Select ${field.label.toLowerCase()}...`} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option: string) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
       default:
         return (
           <Input
             id={fieldKey}
             type={field.type}
-            placeholder={`Enter ${field.label.toLowerCase()}...`}
+            placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
             value={value}
             onChange={(e) => updateManualData(fieldKey, e.target.value)}
             className="mt-1"
@@ -194,6 +219,9 @@ export default function Admin() {
       const scrapedData: ManualEntryData = {
         title: "AmberHouse",
         description: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast.",
+        price: "1800000",
+        psf: "1800",
+        location: "Amber Gardens, Singapore",
         projectName: validation.projectName,
         developerName: validation.developer,
         address: validation.previewData.address,
@@ -201,6 +229,8 @@ export default function Admin() {
         country: "Singapore",
         postalCode: "439964",
         propertyType: "Condominium",
+        bedrooms: "1-5 Bedrooms",
+        sqft: "450-1650 sq ft",
         tenure: validation.previewData.tenure,
         status: "available",
         launchType: "new-launch",
