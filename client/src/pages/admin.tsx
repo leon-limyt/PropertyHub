@@ -127,6 +127,7 @@ export default function Admin() {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState<string>("");
   const [isScrapingUrl, setIsScrapingUrl] = useState(false);
+  const [isFormCleared, setIsFormCleared] = useState(false);
   const { toast } = useToast();
 
   // Helper functions
@@ -326,6 +327,7 @@ export default function Admin() {
         
         setManualData(scrapedData);
         setIsDataLoaded(true);
+        setIsFormCleared(false);
       } catch (error) {
         console.error('Error loading scraped data:', error);
         // Fallback to validation data if full scraped data fails
@@ -375,16 +377,17 @@ export default function Admin() {
         
         setManualData(fallbackData);
         setIsDataLoaded(true);
+        setIsFormCleared(false);
       }
     }
   };
 
-  // Load scraped data when validation data is available
+  // Load scraped data when validation data is available (but not if form was manually cleared)
   useEffect(() => {
-    if (validation && !isDataLoaded) {
+    if (validation && !isDataLoaded && !isFormCleared) {
       loadScrapedData();
     }
-  }, [validation, isDataLoaded]);
+  }, [validation, isDataLoaded, isFormCleared]);
 
   // Reset form when property source changes
   useEffect(() => {
@@ -392,6 +395,7 @@ export default function Admin() {
     setManualData({});
     setImportStatus(null);
     setScrapeUrl("");
+    setIsFormCleared(false);
   }, [selectedProperty]);
 
   // Import property data dynamically
@@ -462,14 +466,19 @@ export default function Admin() {
   };
 
   const handleClearForm = () => {
+    // Reset all form data to empty object
     setManualData({});
     setIsDataLoaded(false);
     setScrapeUrl("");
     setImportStatus(null);
+    setIsFormCleared(true);
+    
+    // Reset the selected category to the first tab
+    setSelectedCategory("Core");
     
     toast({
-      title: "Form Cleared",
-      description: "All form fields have been reset.",
+      title: "✅ Form Cleared",
+      description: "All form fields have been reset to empty values.",
       duration: 3000,
     });
   };
@@ -497,6 +506,7 @@ export default function Admin() {
         // Populate the manual data fields with scraped data
         setManualData(scrapedData.data);
         setIsDataLoaded(true);
+        setIsFormCleared(false);
         
         toast({
           title: "✅ URL Scraped Successfully",
