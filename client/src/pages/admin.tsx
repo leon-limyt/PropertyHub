@@ -45,16 +45,16 @@ export default function Admin() {
   const { data: validation, isLoading: validationLoading } = useQuery<ValidationResult>({
     queryKey: ["/api/admin/validate/amberhouse"],
     queryFn: async () => {
-      return await apiRequest("/api/admin/validate/amberhouse");
+      const response = await apiRequest("GET", "/api/admin/validate/amberhouse");
+      return await response.json();
     },
   });
 
   // Import AmberHouse data
   const importMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/admin/import/amberhouse", {
-        method: "POST",
-      });
+      const response = await apiRequest("POST", "/api/admin/import/amberhouse");
+      return await response.json();
     },
     onSuccess: (data) => {
       setImportStatus(data);
