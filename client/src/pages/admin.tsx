@@ -80,7 +80,7 @@ const PROPERTY_FIELDS = {
   agentName: { label: "Agent Name", type: "text", category: "Contact", required: true },
   agentPhone: { label: "Agent Phone", type: "text", category: "Contact", required: true },
   agentEmail: { label: "Agent Email", type: "email", category: "Contact", required: true },
-  expectedRoi: { label: "Expected ROI (%)", type: "number", category: "Investment", required: false },
+  expectedRoi: { label: "Expected ROI (%)", type: "number", category: "Contact", required: false },
   
   // Project Details
   projectId: { label: "Project ID", type: "text", category: "Project", required: false, autoGenerate: true },

@@ -62,6 +62,34 @@ interface ScrapedPropertyData {
 
 export class PropertyDataScraper {
   /**
+   * Clean HTML tags and decode entities from text
+   */
+  static cleanHtmlText(text: string): string {
+    if (!text) return '';
+    
+    // Remove HTML tags
+    let cleaned = text.replace(/<[^>]*>/g, '');
+    
+    // Decode common HTML entities
+    cleaned = cleaned
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&rsquo;/g, "'")
+      .replace(/&lsquo;/g, "'")
+      .replace(/&rdquo;/g, '"')
+      .replace(/&ldquo;/g, '"');
+    
+    // Clean up extra whitespace
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    
+    return cleaned;
+  }
+
+  /**
    * Scrape property data from any URL
    */
   static async scrapeFromUrl(url: string): Promise<{ [key: string]: string }> {
@@ -97,7 +125,7 @@ export class PropertyDataScraper {
                         content.match(/# ([^\n]+)/m) ||
                         content.match(/## ([^\n]+)/m);
       if (titleMatch) {
-        extractedData.title = titleMatch[1].trim();
+        extractedData.title = this.cleanHtmlText(titleMatch[1]);
       }
       
       // Extract basic property information from content
@@ -109,14 +137,14 @@ export class PropertyDataScraper {
           const districtMatch = line.match(/District\s*:?\s*([^\n,|]+)/i) || 
                               line.match(/D(\d+)/i);
           if (districtMatch) {
-            extractedData.district = districtMatch[1].trim();
+            extractedData.district = this.cleanHtmlText(districtMatch[1]);
           }
         }
         
         if (line.includes('Developer') || line.includes('DEVELOPER')) {
           const developerMatch = line.match(/Developer\s*:?\s*([^\n,|]+)/i);
           if (developerMatch) {
-            extractedData.developerName = developerMatch[1].trim();
+            extractedData.developerName = this.cleanHtmlText(developerMatch[1]);
           }
         }
         
@@ -130,22 +158,22 @@ export class PropertyDataScraper {
         if (line.includes('Tenure') || line.includes('TENURE')) {
           const tenureMatch = line.match(/Tenure\s*:?\s*([^\n,|]+)/i);
           if (tenureMatch) {
-            extractedData.tenure = tenureMatch[1].trim();
+            extractedData.tenure = this.cleanHtmlText(tenureMatch[1]);
           }
         }
         
         if (line.includes('Address') || line.includes('Location')) {
           const addressMatch = line.match(/(?:Address|Location)\s*:?\s*([^\n,|]+)/i);
           if (addressMatch) {
-            extractedData.address = addressMatch[1].trim();
-            extractedData.location = addressMatch[1].trim();
+            extractedData.address = this.cleanHtmlText(addressMatch[1]);
+            extractedData.location = this.cleanHtmlText(addressMatch[1]);
           }
         }
         
         if (line.includes('Property Type') || line.includes('TYPE')) {
           const typeMatch = line.match(/(?:Property\s*)?Type\s*:?\s*([^\n,|]+)/i);
           if (typeMatch) {
-            extractedData.propertyType = typeMatch[1].trim();
+            extractedData.propertyType = this.cleanHtmlText(typeMatch[1]);
           }
         }
       }
@@ -154,7 +182,7 @@ export class PropertyDataScraper {
       const descriptionMatch = content.match(/description[^>]*>([^<]+)/i) ||
                               content.match(/\n\n([^#\n][^\n]{100,})/);
       if (descriptionMatch) {
-        extractedData.description = descriptionMatch[1].trim();
+        extractedData.description = this.cleanHtmlText(descriptionMatch[1]);
       }
       
       // Default values
