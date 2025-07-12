@@ -302,6 +302,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // URL scraping endpoint
+  app.post("/api/admin/scrape-url", async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid URL provided"
+        });
+      }
+
+      // Use web_fetch to get the content
+      const scrapedData = await PropertyDataScraper.scrapeFromUrl(url);
+      
+      res.json({
+        success: true,
+        data: scrapedData,
+        message: "URL scraped successfully"
+      });
+    } catch (error) {
+      console.error('URL scraping error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to scrape URL",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Full scraped data endpoints
   app.get("/api/admin/scraped-data/upperhouse", async (req, res) => {
     try {

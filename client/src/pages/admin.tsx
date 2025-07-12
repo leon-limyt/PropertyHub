@@ -119,6 +119,8 @@ export default function Admin() {
   const [manualData, setManualData] = useState<ManualEntryData>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("Core");
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [scrapeUrl, setScrapeUrl] = useState<string>("");
+  const [isScrapingUrl, setIsScrapingUrl] = useState(false);
   const { toast } = useToast();
 
   // Helper functions
@@ -397,6 +399,53 @@ export default function Admin() {
     importMutation.mutate();
   };
 
+  // URL scraping functionality
+  const handleUrlScrape = async () => {
+    if (!scrapeUrl.trim()) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL to scrape",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsScrapingUrl(true);
+    try {
+      const response = await apiRequest("POST", "/api/admin/scrape-url", {
+        url: scrapeUrl.trim()
+      });
+      
+      const scrapedData = await response.json();
+      
+      if (scrapedData.success) {
+        // Populate the manual data fields with scraped data
+        setManualData(scrapedData.data);
+        setIsDataLoaded(true);
+        
+        toast({
+          title: "✅ URL Scraped Successfully",
+          description: `Data from ${scrapeUrl} has been loaded into the form fields.`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "⚠️ Scraping Failed",
+          description: scrapedData.message || "Failed to scrape data from the URL",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Scraping Error",
+        description: "There was an error scraping the URL. Please check the URL and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScrapingUrl(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -428,6 +477,51 @@ export default function Admin() {
                   <SelectItem value="amberhouse">AmberHouse</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* URL Data Scraper */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Globe className="h-5 w-5 mr-2" />
+              URL Data Scraper
+            </CardTitle>
+            <CardDescription>
+              Enter any property URL to scrape data and populate the form fields below
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Label htmlFor="scrape-url">Property URL:</Label>
+                <Input
+                  id="scrape-url"
+                  type="url"
+                  placeholder="https://example.com/property-listing"
+                  value={scrapeUrl}
+                  onChange={(e) => setScrapeUrl(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <Button 
+                onClick={handleUrlScrape}
+                disabled={isScrapingUrl || !scrapeUrl.trim()}
+                className="flex items-center gap-2"
+              >
+                {isScrapingUrl ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Scraping...
+                  </>
+                ) : (
+                  <>
+                    <Globe className="h-4 w-4" />
+                    Scrape Data
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
