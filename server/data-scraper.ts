@@ -82,18 +82,20 @@ export class PropertyDataScraper {
       
       // Extract title (Development Name from the first line typically)
       const titlePatterns = [
-        /^Development\s*Name\s*([^\n]+)/i,
+        /Development\s*Name\s*([^\n\r]+)/i,
         /^([A-Z][^,\n]+(?:development|project|residence|condos?|apartments?|towers?|estate|gardens?|villas?|heights?|court|place|view|park|green|square|plaza|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise|peak|summit|pinnacle|apex|crown|heights?|towers?|suites?|residences?|plaza|square|gardens?|park|green|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise)[^,\n]*)/im,
         /project\s*name\s*:?\s*([^\n,|]+)/i,
-        /property\s*name\s*:?\s*([^\n,|]+)/i,
-        /development\s*name\s*:?\s*([^\n,|]+)/i
+        /property\s*name\s*:?\s*([^\n,|]+)/i
       ];
       
       for (const pattern of titlePatterns) {
         const match = pdfText.match(pattern);
         if (match && !extractedData.title) {
-          extractedData.title = this.cleanHtmlText(match[1]);
-          extractedData.projectName = this.cleanHtmlText(match[1]);
+          let title = this.cleanHtmlText(match[1]).trim();
+          // Clean up concatenated text like "Development NamePromenade Peak"
+          title = title.replace(/^Development\s*Name\s*/i, '').trim();
+          extractedData.title = title;
+          extractedData.projectName = title;
           break;
         }
       }
@@ -221,8 +223,13 @@ export class PropertyDataScraper {
             }
             
             // Special processing for certain fields
-            if (field === 'district' && /^\d+$/.test(value)) {
-              value = `District ${value}`;
+            if (field === 'district') {
+              // Handle district formatting - extract number and format properly
+              const districtNum = value.match(/\d+/);
+              if (districtNum) {
+                const num = parseInt(districtNum[0]);
+                value = `District ${num}`;
+              }
             }
             if (field === 'siteAreaSqm') {
               const numMatch = value.match(/([\d,]+(?:\.\d+)?)/);
@@ -249,33 +256,59 @@ export class PropertyDataScraper {
         }
       }
       
-      // Extract unit sizes from bedroom table
-      const unitSizeMatch = pdfText.match(/Bedroom\s*Type.*?Size\s*\(sqft\).*?(\d+)\s*-\s*(\d+)/is);
-      if (unitSizeMatch) {
-        const minSize = unitSizeMatch[1];
-        const maxSize = unitSizeMatch[2];
-        extractedData.unitSizes = `${minSize} - ${maxSize} sqft`;
+      // Extract unit sizes from bedroom table - get minimum and maximum sizes
+      const unitSizePatterns = [
+        /(\d+)\s*-\s*(\d+)\s*sqft/i,
+        /Size\s*\(sqft\).*?(\d+).*?(\d+)/is,
+        /(\d+)\s*sqft.*?(\d+)\s*sqft/i
+      ];
+      
+      let minSize = null;
+      let maxSize = null;
+      
+      // Find all size matches in the bedroom table
+      const bedroomTableMatch = pdfText.match(/Bedroom\s*Type.*?Size\s*\(sqft\).*?Total.*?Units/is);
+      if (bedroomTableMatch) {
+        const tableContent = bedroomTableMatch[0];
+        const sizeMatches = tableContent.match(/(\d+)\s*-?\s*(\d+)?\s*sqft/gi);
+        if (sizeMatches) {
+          const sizes = [];
+          for (const match of sizeMatches) {
+            const nums = match.match(/(\d+)/g);
+            if (nums) {
+              sizes.push(...nums.map(n => parseInt(n)));
+            }
+          }
+          if (sizes.length > 0) {
+            minSize = Math.min(...sizes);
+            maxSize = Math.max(...sizes);
+            extractedData.unitSizes = `${minSize} - ${maxSize} sqft`;
+          }
+        }
       }
       
-      // Extract unit mix summary from the bedroom table
-      const unitMixMatches = pdfText.match(/(1-Bedroom[^%]*%)/gi);
-      if (unitMixMatches && unitMixMatches.length > 0) {
-        const unitTypes = [];
-        const bedroomTableMatch = pdfText.match(/Bedroom\s*Type.*?Size.*?Units.*?Percentage(.*?)(?=\n\n|\n[A-Z])/s);
-        if (bedroomTableMatch) {
-          const tableContent = bedroomTableMatch[1];
-          const lines = tableContent.split('\n').filter(line => line.trim());
-          
-          for (const line of lines) {
-            const match = line.match(/(\d+)-Bedroom[^%]*(\d+\.\d+)%/);
-            if (match) {
-              unitTypes.push(`${match[1]}-Bedroom: ${match[2]}%`);
+      // Extract bedroom types in a cleaner format
+      const bedroomTypes = [];
+      const bedroomMatches = pdfText.match(/(\d+)-Bedroom[^%]*(\d+\.\d+)%/g);
+      if (bedroomMatches) {
+        for (const match of bedroomMatches) {
+          const typeMatch = match.match(/(\d+)-Bedroom/);
+          if (typeMatch) {
+            const bedrooms = typeMatch[1];
+            if (!bedroomTypes.includes(bedrooms)) {
+              bedroomTypes.push(bedrooms);
             }
           }
         }
-        if (unitTypes.length > 0) {
-          extractedData.unitMix = unitTypes.join(', ');
-        }
+      }
+      
+      // Also check for Penthouse
+      if (pdfText.includes('Penthouse')) {
+        bedroomTypes.push('Penthouse');
+      }
+      
+      if (bedroomTypes.length > 0) {
+        extractedData.bedrooms = bedroomTypes.join(', ') + ' Bedrooms';
       }
       
       // Set defaults for missing fields

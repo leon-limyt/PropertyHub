@@ -181,6 +181,11 @@ Preferred communication style: Simple, everyday language.
   - Implemented PDF upload functionality with 50MB file size limit and proper error handling
   - Enhanced admin interface with dual data source options (URL scraping and PDF processing)
   - Added sophisticated PDF text extraction patterns for property information including pricing, specifications, and location details
+  - Enhanced PDF parsing with property factsheet-specific patterns for structured data extraction
+  - Fixed title extraction to properly handle "Development Name" prefix removal
+  - Improved unit size extraction with comprehensive bedroom table analysis
+  - Enhanced district formatting to properly convert "03" to "District 3" format
+  - Added bedroom type extraction with cleaner formatting for property display
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation
