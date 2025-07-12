@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,6 +106,7 @@ export default function Admin() {
   const [importStatus, setImportStatus] = useState<ImportResult | null>(null);
   const [manualData, setManualData] = useState<ManualEntryData>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("Core");
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   // Helper functions
   const updateManualData = (field: string, value: string | boolean) => {
@@ -176,6 +177,8 @@ export default function Admin() {
     }
   };
 
+
+
   // Validate AmberHouse data
   const { data: validation, isLoading: validationLoading } = useQuery<ValidationResult>({
     queryKey: ["/api/admin/validate/amberhouse"],
@@ -184,6 +187,59 @@ export default function Admin() {
       return await response.json();
     },
   });
+
+  // Load scraped data into form fields
+  const loadScrapedData = () => {
+    if (validation && !isDataLoaded) {
+      const scrapedData: ManualEntryData = {
+        title: "AmberHouse",
+        description: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast.",
+        projectName: validation.projectName,
+        developerName: validation.developer,
+        address: validation.previewData.address,
+        district: validation.previewData.district,
+        country: "Singapore",
+        postalCode: "439964",
+        propertyType: "Condominium",
+        tenure: validation.previewData.tenure,
+        status: "available",
+        launchType: "new-launch",
+        noOfUnits: validation.previewData.totalUnits.toString(),
+        noOfBlocks: "1",
+        storeyRange: "16 Storeys",
+        siteAreaSqm: "3801.4",
+        plotRatio: "2.5",
+        launchDate: "2024-01-01",
+        completionDate: validation.previewData.completionDate,
+        projectStatus: "Open for Booking",
+        primarySchoolsWithin1km: "Tanjong Katong Primary School, Haig Girls' School, Kong Hwa Primary School",
+        mrtNearby: "Tanjong Katong MRT, Marine Parade MRT, Katong Park MRT",
+        projectDescription: "Located at Amber Gardens, AmberHouse is a freehold development that sits within the quaint residential enclave along Amber Road, in the prime vicinity of Singapore's East Coast. Stay close to an array of dining, shopping and recreational amenities.",
+        imageUrl: "https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600",
+        // Default values for missing fields
+        agentName: "Property Sales Team",
+        agentPhone: "+65 6100 8108",
+        agentEmail: "sales@propertyreviewsg.com",
+        expectedRoi: "6.5",
+        lat: "1.302000",
+        lng: "103.906700",
+        isFeatured: "false",
+        isOverseas: "false",
+        featured: "false",
+        planningArea: "Marine Parade"
+      };
+      
+      setManualData(scrapedData);
+      setIsDataLoaded(true);
+    }
+  };
+
+  // Load scraped data when validation data is available
+  useEffect(() => {
+    if (validation && !isDataLoaded) {
+      loadScrapedData();
+    }
+  }, [validation, isDataLoaded]);
 
   // Import AmberHouse data
   const importMutation = useMutation({
@@ -337,13 +393,27 @@ export default function Admin() {
 
                 {/* Universal Property Data Editor */}
                 <div className="border rounded-lg p-6 bg-gray-50">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <Settings className="h-5 w-5 mr-2 text-blue-500" />
-                    Property Data Editor
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-6">
-                    Fill in or override property fields. This universal editor can handle any property data source and missing fields will be marked for manual entry.
-                  </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Settings className="h-5 w-5 mr-2 text-blue-500" />
+                        Property Data Editor
+                      </h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Fill in or override property fields. This universal editor can handle any property data source.
+                      </p>
+                    </div>
+                    {!isDataLoaded && (
+                      <Button
+                        onClick={loadScrapedData}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Load AmberHouse Data
+                      </Button>
+                    )}
+                  </div>
                   
                   <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
                     <TabsList className="grid w-full grid-cols-6">
