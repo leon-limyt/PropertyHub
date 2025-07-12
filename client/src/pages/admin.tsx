@@ -350,6 +350,7 @@ export default function Admin() {
     setIsDataLoaded(false);
     setManualData({});
     setImportStatus(null);
+    setScrapeUrl("");
   }, [selectedProperty]);
 
   // Import property data dynamically
@@ -370,6 +371,11 @@ export default function Admin() {
           description: `${data.imported} ${validation?.projectName || 'property'} entries are now available in your database.`,
           duration: 5000,
         });
+        
+        // Reset form fields after successful import
+        setManualData({});
+        setIsDataLoaded(false);
+        setScrapeUrl("");
       } else {
         toast({
           title: "⚠️ Import Completed with Warnings",
@@ -397,6 +403,19 @@ export default function Admin() {
 
   const handleImport = () => {
     importMutation.mutate();
+  };
+
+  const handleClearForm = () => {
+    setManualData({});
+    setIsDataLoaded(false);
+    setScrapeUrl("");
+    setImportStatus(null);
+    
+    toast({
+      title: "Form Cleared",
+      description: "All form fields have been reset.",
+      duration: 3000,
+    });
   };
 
   // URL scraping functionality
@@ -552,16 +571,28 @@ export default function Admin() {
                       Load scraped property data into the form fields below, or enter property details manually.
                     </p>
                   </div>
-                  {!isDataLoaded && (
-                    <Button
-                      onClick={loadScrapedData}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Load Scraped Data
-                    </Button>
-                  )}
+                  <div className="flex gap-2">
+                    {!isDataLoaded && (
+                      <Button
+                        onClick={loadScrapedData}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Load Scraped Data
+                      </Button>
+                    )}
+                    {isDataLoaded && (
+                      <Button
+                        onClick={handleClearForm}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        Clear Form
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
