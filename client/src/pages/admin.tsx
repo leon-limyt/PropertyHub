@@ -128,6 +128,8 @@ export default function Admin() {
   const [scrapeUrl, setScrapeUrl] = useState<string>("");
   const [isScrapingUrl, setIsScrapingUrl] = useState(false);
   const [isFormCleared, setIsFormCleared] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   const { toast } = useToast();
 
   // Helper functions
@@ -531,6 +533,74 @@ export default function Admin() {
     }
   };
 
+  // PDF processing functionality
+  const handlePdfUpload = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a PDF file to process",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedFile.type !== "application/pdf") {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select a PDF file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingPdf(true);
+    try {
+      const formData = new FormData();
+      formData.append('pdf', selectedFile);
+
+      const response = await fetch('/api/admin/process-pdf', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Populate the manual data fields with extracted data
+        setManualData(result.data);
+        setIsDataLoaded(true);
+        setIsFormCleared(false);
+        
+        toast({
+          title: "✅ PDF Processed Successfully",
+          description: `Data from ${selectedFile.name} has been loaded into the form fields.`,
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "⚠️ Processing Failed",
+          description: result.message || "Failed to extract data from the PDF",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "❌ Processing Error",
+        description: "There was an error processing the PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingPdf(false);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -571,42 +641,83 @@ export default function Admin() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Globe className="h-5 w-5 mr-2" />
-              URL Data Scraper
+              URL Data Scraper & PDF Processor
             </CardTitle>
             <CardDescription>
-              Enter any property URL to scrape data and populate the form fields below
+              Enter any property URL to scrape data or upload a PDF document to extract property information
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <Label htmlFor="scrape-url">Property URL:</Label>
-                <Input
-                  id="scrape-url"
-                  type="url"
-                  placeholder="https://example.com/property-listing"
-                  value={scrapeUrl}
-                  onChange={(e) => setScrapeUrl(e.target.value)}
-                  className="mt-1"
-                />
+            <div className="space-y-4">
+              {/* URL Input Section */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="scrape-url">Property URL:</Label>
+                  <Input
+                    id="scrape-url"
+                    type="url"
+                    placeholder="https://example.com/property-listing"
+                    value={scrapeUrl}
+                    onChange={(e) => setScrapeUrl(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <Button 
+                  onClick={handleUrlScrape}
+                  disabled={isScrapingUrl || !scrapeUrl.trim()}
+                  className="flex items-center gap-2"
+                >
+                  {isScrapingUrl ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Scraping...
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-4 w-4" />
+                      Scrape Data
+                    </>
+                  )}
+                </Button>
               </div>
-              <Button 
-                onClick={handleUrlScrape}
-                disabled={isScrapingUrl || !scrapeUrl.trim()}
-                className="flex items-center gap-2"
-              >
-                {isScrapingUrl ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Scraping...
-                  </>
-                ) : (
-                  <>
-                    <Globe className="h-4 w-4" />
-                    Scrape Data
-                  </>
-                )}
-              </Button>
+
+              <Separator />
+
+              {/* PDF Upload Section */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="pdf-upload">Upload PDF Document:</Label>
+                  <Input
+                    id="pdf-upload"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="mt-1"
+                  />
+                  {selectedFile && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+                <Button 
+                  onClick={handlePdfUpload}
+                  disabled={isProcessingPdf || !selectedFile}
+                  className="flex items-center gap-2"
+                >
+                  {isProcessingPdf ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Process PDF
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

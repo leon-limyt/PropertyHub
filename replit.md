@@ -177,6 +177,10 @@ Preferred communication style: Simple, everyday language.
   - Added comprehensive table-based data extraction for property information websites
   - Enhanced pattern matching to handle specific property data formats like "Est 2027/2028" and "2 to 4-Bedrm"
   - Improved field mapping for developer names, site areas, completion dates, and unit configurations
+  - Added PDF document extraction capability with comprehensive property data parsing
+  - Implemented PDF upload functionality with 50MB file size limit and proper error handling
+  - Enhanced admin interface with dual data source options (URL scraping and PDF processing)
+  - Added sophisticated PDF text extraction patterns for property information including pricing, specifications, and location details
 - **Database Schema Consistency Updates (January 2025)**: Major database field restructuring
   - Removed 'bathrooms' field completely from database schema and UI
   - Renamed 'bedrooms' to 'bedroomType' for better data representation

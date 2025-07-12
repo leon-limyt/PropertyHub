@@ -336,6 +336,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PDF processing endpoint
+  app.post("/api/admin/process-pdf", async (req, res) => {
+    try {
+      if (!req.files || !req.files.pdf) {
+        return res.status(400).json({
+          success: false,
+          message: "No PDF file provided"
+        });
+      }
+
+      const pdfFile = req.files.pdf as any;
+      const pdfBuffer = Buffer.from(pdfFile.data);
+
+      // Extract data from PDF
+      const extractedData = await PropertyDataScraper.extractFromPdf(pdfBuffer);
+      
+      res.json({
+        success: true,
+        data: extractedData,
+        message: "PDF processed successfully"
+      });
+    } catch (error) {
+      console.error('PDF processing error:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process PDF",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Full scraped data endpoints
   app.get("/api/admin/scraped-data/upperhouse", async (req, res) => {
     try {

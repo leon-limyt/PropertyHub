@@ -3,6 +3,10 @@ import { properties } from '@shared/schema';
 import type { InsertProperty } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { storage } from './storage';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 interface ScrapedPropertyData {
   // Core property information
@@ -61,6 +65,179 @@ interface ScrapedPropertyData {
 }
 
 export class PropertyDataScraper {
+  /**
+   * Extract property data from PDF document
+   */
+  static async extractFromPdf(pdfBuffer: Buffer): Promise<{ [key: string]: string }> {
+    try {
+      const data = await pdfParse(pdfBuffer);
+      const pdfText = data.text;
+      
+      // Initialize extracted data
+      const extractedData: { [key: string]: string } = {};
+      
+      // Clean and prepare content for extraction
+      const cleanContent = this.cleanHtmlText(pdfText);
+      const lines = cleanContent.split('\n').filter(line => line.trim().length > 0);
+      
+      // Extract title from multiple sources
+      const titlePatterns = [
+        /^([A-Z][^,\n]+(?:development|project|residence|condos?|apartments?|towers?|estate|gardens?|villas?|heights?|court|place|view|park|green|square|plaza|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise|gardens?|park|green|square|plaza|terrace|grove|hill|ridge|bay|coast|manor|springs?|creek|point|landing|crossing|commons?|gateway|centre|center|walk|way|avenue|drive|road|street|lane|boulevard|crescent|close|circle|loop|mews|rise)[^,\n]*)/im,
+        /project\s*name\s*:?\s*([^\n,|]+)/i,
+        /property\s*name\s*:?\s*([^\n,|]+)/i,
+        /development\s*name\s*:?\s*([^\n,|]+)/i
+      ];
+      
+      for (const pattern of titlePatterns) {
+        const match = pdfText.match(pattern);
+        if (match && !extractedData.title) {
+          extractedData.title = this.cleanHtmlText(match[1]);
+          extractedData.projectName = this.cleanHtmlText(match[1]);
+          break;
+        }
+      }
+      
+      // Advanced multi-pattern extraction for each field
+      const extractionPatterns = {
+        developerName: [
+          /developer\s*:?\s*([^\n,|<>]+)/i,
+          /developed\s*by\s*:?\s*([^\n,|<>]+)/i,
+          /master\s*developer\s*:?\s*([^\n,|<>]+)/i,
+          /builder\s*:?\s*([^\n,|<>]+)/i
+        ],
+        district: [
+          /district\s*:?\s*([^\n,|<>]+)/i,
+          /district\s+(\d+)/i,
+          /D(\d+)/i,
+          /planning\s*area.*?district\s*(\d+)/i
+        ],
+        address: [
+          /address\s*:?\s*([^\n,|<>]+)/i,
+          /location\s*:?\s*([^\n,|<>]+)/i,
+          /situated\s*(?:at|in)\s*([^\n,|<>]+)/i
+        ],
+        postalCode: [
+          /singapore\s*(\d{6})/i,
+          /postal\s*code\s*:?\s*(\d{6})/i
+        ],
+        propertyType: [
+          /type\s*of\s*project\s*:?\s*([^\n,|<>]+)/i,
+          /project\s*type\s*:?\s*([^\n,|<>]+)/i,
+          /(condominium|apartment|executive|landed|townhouse|penthouse)/i
+        ],
+        tenure: [
+          /tenure\s*:?\s*([^\n,|<>]+)/i,
+          /(freehold|leasehold|99-year|999-year|103-year)/i
+        ],
+        noOfUnits: [
+          /no\.\s*of\s*units\s*:?\s*(\d+)/i,
+          /total\s*units?\s*:?\s*(\d+)/i,
+          /(\d+)\s*units?/i
+        ],
+        noOfBlocks: [
+          /(\d+)\s*blocks?/i,
+          /blocks?\s*:?\s*(\d+)/i,
+          /towers?\s*:?\s*(\d+)/i
+        ],
+        storeyRange: [
+          /(\d+)\s*storeys?/i,
+          /storey\s*:?\s*([^\n,|<>]+)/i,
+          /floors?\s*:?\s*([^\n,|<>]+)/i
+        ],
+        siteAreaSqm: [
+          /site\s*area\s*:?\s*([^\n,|<>]+)/i,
+          /([\d,]+(?:\.\d+)?)\s*sqm/i,
+          /land\s*area\s*:?\s*([^\n,|<>]+)/i
+        ],
+        completionDate: [
+          /completion\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
+          /top\s*:?\s*([^\n,|<>]+)/i,
+          /ready\s*:?\s*([^\n,|<>]+)/i
+        ],
+        launchDate: [
+          /launch\s*(?:date)?\s*:?\s*([^\n,|<>]+)/i,
+          /expected\s*launch\s*:?\s*([^\n,|<>]+)/i
+        ],
+        planningArea: [
+          /planning\s*area\s*:?\s*([^\n,|<>]+)/i,
+          /area\s*:?\s*([A-Z][^,\n|<>]{3,20})/i
+        ],
+        mrtNearby: [
+          /mrt\s*:?\s*([^\n,|<>]+)/i,
+          /nearest\s*mrt\s*:?\s*([^\n,|<>]+)/i,
+          /transport\s*:?\s*([^\n,|<>]+mrt[^\n,|<>]*)/i
+        ],
+        bedrooms: [
+          /unit\s*mix\s*:?\s*([^\n,|<>]+)/i,
+          /bedroom\s*types?\s*:?\s*([^\n,|<>]+)/i,
+          /(\d+)\s*to\s*(\d+)-bedrm/i
+        ],
+        price: [
+          /price\s*from\s*:?\s*\$?([^\n,|<>]+)/i,
+          /starting\s*price\s*:?\s*\$?([^\n,|<>]+)/i,
+          /from\s*\$?([0-9,]+)/i
+        ],
+        psf: [
+          /psf\s*from\s*:?\s*\$?([^\n,|<>]+)/i,
+          /price\s*per\s*sq\s*ft\s*:?\s*\$?([^\n,|<>]+)/i,
+          /\$([0-9,]+)\s*psf/i
+        ],
+        description: [
+          /description\s*:?\s*([^\n]{50,200})/i,
+          /about\s*the\s*project\s*:?\s*([^\n]{50,200})/i,
+          /project\s*description\s*:?\s*([^\n]{50,200})/i
+        ]
+      };
+      
+      // Apply extraction patterns
+      for (const [field, patterns] of Object.entries(extractionPatterns)) {
+        for (const pattern of patterns) {
+          const match = pdfText.match(pattern);
+          if (match) {
+            let value = '';
+            if (match[1]) {
+              value = this.cleanHtmlText(match[1]).trim();
+            } else if (match[0]) {
+              value = this.cleanHtmlText(match[0]).trim();
+            }
+            
+            // Special processing for certain fields
+            if (field === 'district' && /^\d+$/.test(value)) {
+              value = `District ${value}`;
+            }
+            if (field === 'siteAreaSqm') {
+              const numMatch = value.match(/([\d,]+(?:\.\d+)?)/);
+              if (numMatch) value = numMatch[1].replace(/,/g, '');
+            }
+            if (field === 'noOfUnits' || field === 'noOfBlocks') {
+              const numMatch = value.match(/(\d+)/);
+              if (numMatch) value = numMatch[1];
+            }
+            if (field === 'price' || field === 'psf') {
+              const numMatch = value.match(/([\d,]+)/);
+              if (numMatch) value = numMatch[1].replace(/,/g, '');
+            }
+            
+            if (value.length > 0 && value.length < 500) {
+              extractedData[field] = value;
+              break;
+            }
+          }
+        }
+      }
+      
+      // Set defaults for missing fields
+      if (!extractedData.country) extractedData.country = 'Singapore';
+      if (!extractedData.propertyType) extractedData.propertyType = 'Condominium';
+      if (!extractedData.status) extractedData.status = 'available';
+      if (!extractedData.launchType) extractedData.launchType = 'new-launch';
+      
+      return extractedData;
+    } catch (error) {
+      throw new Error(`Failed to extract data from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   /**
    * Clean HTML tags and decode entities from text
    */
