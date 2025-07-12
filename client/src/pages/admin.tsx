@@ -420,7 +420,7 @@ export default function Admin() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">
-                      Load scraped AmberHouse data into the form fields below, or enter property details manually.
+                      Load scraped property data into the form fields below, or enter property details manually.
                     </p>
                   </div>
                   {!isDataLoaded && (
@@ -430,7 +430,7 @@ export default function Admin() {
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Load AmberHouse Data
+                      Load Scraped Data
                     </Button>
                   )}
                 </div>
@@ -510,7 +510,7 @@ export default function Admin() {
                       ) : (
                         <>
                           <Download className="h-4 w-4 mr-2" />
-                          Import AmberHouse Data
+                          Import Data
                         </>
                       )}
                     </Button>
