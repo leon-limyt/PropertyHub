@@ -13,7 +13,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign, Settings, Globe, Building, Users, Flag } from "lucide-react";
+import { Download, Database, AlertTriangle, CheckCircle, Info, ArrowRight, MapPin, Phone, DollarSign, Settings, Globe, Building, Users, Flag, Image, Eye, X, Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface ValidationResult {
   title: string;
@@ -47,6 +48,17 @@ interface ImportResult {
 
 interface ManualEntryData {
   [key: string]: string;
+}
+
+interface FloorPlan {
+  id: string;
+  name: string;
+  imageUrl: string;
+  bedroomType: string;
+}
+
+interface FloorPlansByBedroom {
+  [bedroomType: string]: FloorPlan[];
 }
 
 // Property field definitions with labels, types, and categories
@@ -131,7 +143,19 @@ export default function Admin() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessingPdf, setIsProcessingPdf] = useState(false);
   const [isPdfData, setIsPdfData] = useState(false);
+  const [floorPlans, setFloorPlans] = useState<FloorPlansByBedroom>({});
+  const [selectedFloorPlan, setSelectedFloorPlan] = useState<FloorPlan | null>(null);
   const { toast } = useToast();
+
+  // Available bedroom types for floor plans
+  const BEDROOM_TYPES = [
+    "1-Bedroom",
+    "2-Bedroom", 
+    "3-Bedroom",
+    "4-Bedroom",
+    "5-Bedroom",
+    "Penthouse"
+  ];
 
   // Helper functions
   const updateManualData = (field: string, value: string | boolean) => {
@@ -161,8 +185,35 @@ export default function Admin() {
       case "Project": return Building;
       case "Location": return MapPin;
       case "Flags": return Flag;
+      case "Floor Plans": return Image;
       default: return Info;
     }
+  };
+
+  // Floor plan helper functions
+  const addFloorPlan = (bedroomType: string, imageUrl: string, name: string) => {
+    const newFloorPlan: FloorPlan = {
+      id: Date.now().toString(),
+      name,
+      imageUrl,
+      bedroomType
+    };
+    
+    setFloorPlans(prev => ({
+      ...prev,
+      [bedroomType]: [...(prev[bedroomType] || []), newFloorPlan]
+    }));
+  };
+
+  const removeFloorPlan = (bedroomType: string, planId: string) => {
+    setFloorPlans(prev => ({
+      ...prev,
+      [bedroomType]: prev[bedroomType]?.filter(plan => plan.id !== planId) || []
+    }));
+  };
+
+  const getFloorPlansForBedroom = (bedroomType: string) => {
+    return floorPlans[bedroomType] || [];
   };
 
   const renderField = (fieldKey: string, field: any) => {
@@ -401,6 +452,8 @@ export default function Admin() {
     setIsFormCleared(false);
     setIsPdfData(false);
     setSelectedFile(null);
+    setFloorPlans({});
+    setSelectedFloorPlan(null);
   }, [selectedProperty]);
 
   // Import property data dynamically
@@ -440,6 +493,8 @@ export default function Admin() {
         setScrapeUrl("");
         setIsPdfData(false);
         setSelectedFile(null);
+        setFloorPlans({});
+        setSelectedFloorPlan(null);
         
         // Clear import status after showing success message
         setTimeout(() => {
@@ -493,6 +548,8 @@ export default function Admin() {
     setIsFormCleared(true);
     setIsPdfData(false);
     setSelectedFile(null);
+    setFloorPlans({});
+    setSelectedFloorPlan(null);
     
     // Reset the selected category to the first tab
     setSelectedCategory("Core");
@@ -793,7 +850,7 @@ export default function Admin() {
                 </div>
 
                 <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full grid-cols-7">
                       {getCategories().map((category) => {
                         const Icon = getCategoryIcon(category);
                         return (
@@ -803,6 +860,10 @@ export default function Admin() {
                           </TabsTrigger>
                         );
                       })}
+                      <TabsTrigger value="Floor Plans" className="flex items-center gap-2">
+                        <Image className="h-4 w-4" />
+                        Floor Plans
+                      </TabsTrigger>
                     </TabsList>
 
                     {getCategories().map((category) => (
@@ -826,6 +887,110 @@ export default function Admin() {
                         </div>
                       </TabsContent>
                     ))}
+                    
+                    {/* Floor Plans Tab */}
+                    <TabsContent value="Floor Plans" className="mt-6">
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Floor Plans by Bedroom Type</h3>
+                            <p className="text-sm text-gray-600">Upload and organize floor plans by bedroom configuration</p>
+                          </div>
+                        </div>
+                        
+                        {BEDROOM_TYPES.map((bedroomType) => (
+                          <Card key={bedroomType} className="p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-md font-medium text-gray-800">{bedroomType}</h4>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (event) => {
+                                        const imageUrl = event.target?.result as string;
+                                        const planName = `${bedroomType} - Plan ${getFloorPlansForBedroom(bedroomType).length + 1}`;
+                                        addFloorPlan(bedroomType, imageUrl, planName);
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="hidden"
+                                  id={`upload-${bedroomType}`}
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => document.getElementById(`upload-${bedroomType}`)?.click()}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Floor Plan
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {getFloorPlansForBedroom(bedroomType).map((plan) => (
+                                <div key={plan.id} className="relative group">
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <div className="cursor-pointer transition-transform hover:scale-105">
+                                        <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200 hover:border-blue-500">
+                                          <img
+                                            src={plan.imageUrl}
+                                            alt={plan.name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                        <div className="mt-2">
+                                          <p className="text-sm font-medium text-gray-700 truncate">{plan.name}</p>
+                                          <div className="flex items-center gap-2 mt-1">
+                                            <Eye className="h-3 w-3 text-gray-500" />
+                                            <span className="text-xs text-gray-500">Click to view</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+                                      <DialogHeader>
+                                        <DialogTitle>{plan.name}</DialogTitle>
+                                      </DialogHeader>
+                                      <div className="mt-4">
+                                        <img
+                                          src={plan.imageUrl}
+                                          alt={plan.name}
+                                          className="w-full h-auto rounded-lg"
+                                        />
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                  
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
+                                    onClick={() => removeFloorPlan(bedroomType, plan.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                              
+                              {getFloorPlansForBedroom(bedroomType).length === 0 && (
+                                <div className="col-span-full text-center py-8 text-gray-500">
+                                  <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                                  <p className="text-sm">No floor plans uploaded for {bedroomType}</p>
+                                  <p className="text-xs text-gray-400 mt-1">Click "Add Floor Plan" to upload images</p>
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </TabsContent>
                   </Tabs>
 
                   {/* Data Preview Summary */}
