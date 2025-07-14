@@ -145,6 +145,7 @@ export default function Admin() {
   const [isPdfData, setIsPdfData] = useState(false);
   const [floorPlans, setFloorPlans] = useState<FloorPlansByBedroom>({});
   const [selectedFloorPlan, setSelectedFloorPlan] = useState<FloorPlan | null>(null);
+  const [selectedBedroomType, setSelectedBedroomType] = useState<string>("1-Bedroom");
   const { toast } = useToast();
 
   // Available bedroom types for floor plans
@@ -454,6 +455,7 @@ export default function Admin() {
     setSelectedFile(null);
     setFloorPlans({});
     setSelectedFloorPlan(null);
+    setSelectedBedroomType("1-Bedroom");
   }, [selectedProperty]);
 
   // Import property data dynamically
@@ -495,6 +497,7 @@ export default function Admin() {
         setSelectedFile(null);
         setFloorPlans({});
         setSelectedFloorPlan(null);
+        setSelectedBedroomType("1-Bedroom");
         
         // Clear import status after showing success message
         setTimeout(() => {
@@ -550,6 +553,7 @@ export default function Admin() {
     setSelectedFile(null);
     setFloorPlans({});
     setSelectedFloorPlan(null);
+    setSelectedBedroomType("1-Bedroom");
     
     // Reset the selected category to the first tab
     setSelectedCategory("Core");
@@ -898,97 +902,117 @@ export default function Admin() {
                           </div>
                         </div>
                         
-                        {BEDROOM_TYPES.map((bedroomType) => (
-                          <Card key={bedroomType} className="p-4">
-                            <div className="flex items-center justify-between mb-4">
-                              <h4 className="text-md font-medium text-gray-800">{bedroomType}</h4>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onload = (event) => {
-                                        const imageUrl = event.target?.result as string;
-                                        const planName = `${bedroomType} - Plan ${getFloorPlansForBedroom(bedroomType).length + 1}`;
-                                        addFloorPlan(bedroomType, imageUrl, planName);
-                                      };
-                                      reader.readAsDataURL(file);
-                                    }
-                                  }}
-                                  className="hidden"
-                                  id={`upload-${bedroomType}`}
-                                />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => document.getElementById(`upload-${bedroomType}`)?.click()}
-                                >
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  Add Floor Plan
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              {getFloorPlansForBedroom(bedroomType).map((plan) => (
-                                <div key={plan.id} className="relative group">
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <div className="cursor-pointer transition-transform hover:scale-105">
-                                        <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200 hover:border-blue-500">
-                                          <img
-                                            src={plan.imageUrl}
-                                            alt={plan.name}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        </div>
-                                        <div className="mt-2">
-                                          <p className="text-sm font-medium text-gray-700 truncate">{plan.name}</p>
-                                          <div className="flex items-center gap-2 mt-1">
-                                            <Eye className="h-3 w-3 text-gray-500" />
-                                            <span className="text-xs text-gray-500">Click to view</span>
+                        {/* Bedroom Type Tabs */}
+                        <Tabs value={selectedBedroomType} onValueChange={setSelectedBedroomType} className="w-full">
+                          <TabsList className="grid w-full grid-cols-6">
+                            {BEDROOM_TYPES.map((bedroomType) => (
+                              <TabsTrigger key={bedroomType} value={bedroomType} className="text-xs">
+                                {bedroomType}
+                                {getFloorPlansForBedroom(bedroomType).length > 0 && (
+                                  <Badge variant="secondary" className="ml-2 text-xs">
+                                    {getFloorPlansForBedroom(bedroomType).length}
+                                  </Badge>
+                                )}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+
+                          {BEDROOM_TYPES.map((bedroomType) => (
+                            <TabsContent key={bedroomType} value={bedroomType} className="mt-6">
+                              <Card className="p-4">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h4 className="text-md font-medium text-gray-800">{bedroomType} Floor Plans</h4>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          const reader = new FileReader();
+                                          reader.onload = (event) => {
+                                            const imageUrl = event.target?.result as string;
+                                            const planName = `${bedroomType} - Plan ${getFloorPlansForBedroom(bedroomType).length + 1}`;
+                                            addFloorPlan(bedroomType, imageUrl, planName);
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
+                                        // Reset file input
+                                        e.target.value = '';
+                                      }}
+                                      className="hidden"
+                                      id={`upload-${bedroomType}`}
+                                    />
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => document.getElementById(`upload-${bedroomType}`)?.click()}
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Add Floor Plan
+                                    </Button>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  {getFloorPlansForBedroom(bedroomType).map((plan) => (
+                                    <div key={plan.id} className="relative group">
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <div className="cursor-pointer transition-transform hover:scale-105">
+                                            <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200 hover:border-blue-500">
+                                              <img
+                                                src={plan.imageUrl}
+                                                alt={plan.name}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            </div>
+                                            <div className="mt-2">
+                                              <p className="text-sm font-medium text-gray-700 truncate">{plan.name}</p>
+                                              <div className="flex items-center gap-2 mt-1">
+                                                <Eye className="h-3 w-3 text-gray-500" />
+                                                <span className="text-xs text-gray-500">Click to view</span>
+                                              </div>
+                                            </div>
                                           </div>
-                                        </div>
-                                      </div>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-                                      <DialogHeader>
-                                        <DialogTitle>{plan.name}</DialogTitle>
-                                      </DialogHeader>
-                                      <div className="mt-4">
-                                        <img
-                                          src={plan.imageUrl}
-                                          alt={plan.name}
-                                          className="w-full h-auto rounded-lg"
-                                        />
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+                                          <DialogHeader>
+                                            <DialogTitle>{plan.name}</DialogTitle>
+                                          </DialogHeader>
+                                          <div className="mt-4">
+                                            <img
+                                              src={plan.imageUrl}
+                                              alt={plan.name}
+                                              className="w-full h-auto rounded-lg"
+                                            />
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                      
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
+                                        onClick={() => removeFloorPlan(bedroomType, plan.id)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
                                   
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
-                                    onClick={() => removeFloorPlan(bedroomType, plan.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
+                                  {getFloorPlansForBedroom(bedroomType).length === 0 && (
+                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                      <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                                      <p className="text-sm">No floor plans uploaded for {bedroomType}</p>
+                                      <p className="text-xs text-gray-400 mt-1">Click "Add Floor Plan" to upload images</p>
+                                    </div>
+                                  )}
                                 </div>
-                              ))}
-                              
-                              {getFloorPlansForBedroom(bedroomType).length === 0 && (
-                                <div className="col-span-full text-center py-8 text-gray-500">
-                                  <Image className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                                  <p className="text-sm">No floor plans uploaded for {bedroomType}</p>
-                                  <p className="text-xs text-gray-400 mt-1">Click "Add Floor Plan" to upload images</p>
-                                </div>
-                              )}
-                            </div>
-                          </Card>
-                        ))}
+                              </Card>
+                            </TabsContent>
+                          ))}
+                        </Tabs>
                       </div>
                     </TabsContent>
                   </Tabs>
